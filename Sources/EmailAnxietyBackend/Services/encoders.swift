@@ -45,6 +45,10 @@ struct UserMessage: Decodable {
     }
 }
 
+struct MessageResponse: Decodable {
+    let id: String
+}
+
 struct Email {
     let from: String
     let to: String
@@ -70,4 +74,10 @@ struct Email {
                \(self.body)
                """    
     }
+}
+
+struct GeminiRequest: Encodable {
+    let model: String
+    let input: String
+    let system_instruction: String
 }

@@ -2,9 +2,8 @@ import Foundation
 
 enum RequestError: Error {
     case requestError
+    case encodingError
 }
-
-
 
 final class gmailService: Sendable {
 
@@ -62,16 +61,30 @@ final class gmailService: Sendable {
         }
     }
 
-    func writeDraft(email: Email) async throws {
+    func writeDraft(email: Email) async throws -> String{
         guard let body: Data = Data(base64Encoded: email.getRFCEncoding()) else {
             debugPrint("issue with encoding email string")
-            return
+            throw RequestError.encodingError
         }
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/drafts")
         request.httpMethod = "POST"
         request.httpBody = body
-        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let messageResponse = try JSONDecoder().decode(MessageResponse.self, from: data)
+        return messageResponse.id
+    }
 
-
+    // important to note that the resulting id returned will not be the same as the one given
+    func updateDraft(email: Email, id: String) async throws -> String {
+         guard let body: Data = Data(base64Encoded: email.getRFCEncoding()) else {
+            debugPrint("issue with encoding email string")
+            throw RequestError.encodingError
+        }
+        var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/drafts/\(id)")
+        request.httpMethod = "PUT"
+        request.httpBody = body
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let messageResponse = try JSONDecoder().decode(MessageResponse.self, from: data)
+        return messageResponse.id
     }
 }
