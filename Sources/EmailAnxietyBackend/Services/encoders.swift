@@ -2,6 +2,7 @@
 // this will just give me the important fields right when I encode
 
 import Foundation
+import Vapor
 
 struct UserMessageLinks: Decodable {
 
@@ -43,13 +44,30 @@ struct UserMessage: Decodable {
     struct Body: Decodable {
         let data: String?
     }
+
+    func getEmail() throws -> Email? {
+        if (body == nil) {
+            for part: UserMessage in parts! {
+                if (mimeType == "text/plain") {
+                    return try part.getEmail()
+                }
+            }
+        } else {
+            if let base44 = Data(base64Encoded: body!.data!) {
+                return try Email(body: base44)
+            } else {
+                return nil
+            }
+        }
+        return nil
+    }
 }
 
 struct MessageResponse: Decodable {
     let id: String
 }
 
-struct Email {
+struct Email: Content {
     let from: String
     let to: String
     let subject: String
@@ -62,6 +80,13 @@ struct Email {
         self.subject = subject
         self.date = date
         self.body = body
+    }
+
+    // Data is base-44 encoded utf-8
+    init(body: Data) throws {
+        if let rawString: String = String(data: body, encoding: .utf8) {
+            rawString.firstMatch(of: /From: (.*?)/)
+        }
     }
 
     // return rfc 2822 encoding

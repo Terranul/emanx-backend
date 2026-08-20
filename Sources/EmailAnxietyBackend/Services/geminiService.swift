@@ -5,14 +5,14 @@ class GeminiService {
 
     static let geminiKey: String = Environment.get("GEMINI_KEY")!
 
-    func getRequest() -> URLRequest {
+    static func getRequest() -> URLRequest {
         var request = URLRequest(url: URL(filePath: "https://generativelanguage.googleapis.com/v1/interactions"))
         request.setValue(GeminiService.geminiKey, forHTTPHeaderField: "x-goog-api-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return request
     }
 
-    func getDefaultArtificialResponse(email: Email) {
+    static func getDefaultArtificialResponse(email: Email) -> Email {
         var request: URLRequest = self.getRequest()
         let textInput = email.subject + ": " + email.body
         let systemInstructions = """
