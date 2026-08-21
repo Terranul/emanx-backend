@@ -68,11 +68,11 @@ struct MessageResponse: Decodable {
 }
 
 struct Email: Content {
-    let from: String
-    let to: String
-    let subject: String
+    var from: String
+    var to: String
+    var subject: String
     let date: Date?
-    let body: String
+    var body: String
 
     init(from: String, to: String, subject: String, date: Date?, body: String) {
         self.from = from
@@ -84,6 +84,7 @@ struct Email: Content {
 
     // Data is base-44 encoded utf-8
     init(body: Data) throws {
+        throw NSError()
         if let rawString: String = String(data: body, encoding: .utf8) {
             rawString.firstMatch(of: /From: (.*?)/)
         }
@@ -105,4 +106,21 @@ struct GeminiRequest: Encodable {
     let model: String
     let input: String
     let system_instruction: String
+}
+
+struct GeminiResponse: Decodable {
+
+    struct GeminiSteps: Decodable {
+
+        struct GeminiContent: Decodable {
+            let type: String
+            let text: String
+        }
+
+        let type: String
+        let content: [GeminiContent]
+    }
+    let status: String
+    let steps: [GeminiSteps]
+
 }
