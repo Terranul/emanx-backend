@@ -117,8 +117,9 @@ struct GeminiResponse: Decodable {
             let text: String
         }
 
+        // annoyingly for us, the gemini api may contain a step value that does not contain any Content
         let type: String
-        let content: [GeminiContent]
+        let content: [GeminiContent]?
     }
     let status: String
     let steps: [GeminiSteps]

@@ -24,13 +24,14 @@ class GeminiService {
                                          You may not modify more than 30% of the message.
                                          The modification limitation may be overriden if it is impossible to accomplish one of the given goals without modifying more than 30% of the text input.
                                          """
-        let geminiBody = GeminiRequest(model: "gemini-3.6-flash", input: textInput, system_instruction: systemInstructions)
+        let geminiBody = GeminiRequest(model: "gemini-3.6-flash-lite", input: textInput, system_instruction: systemInstructions)
         request.httpBody = try JSONEncoder().encode(geminiBody)
-        var (data, response) = try await URLSession.shared.data(for: request)
-        print("passed the request")
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        print("passed the decode")
-        let responseText = geminiResponse.steps[0].content[0].text
-        return Email(from: email.from, to: email.to, subject: email.subject, date: email.date, body: responseText)
+        let response = try await URLSession.shared.data(for: request)
+        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: response.0)
+        let responseText: String? = geminiResponse.steps[1].content?[0].text
+        if (responseText == nil) {
+            throw Abort(.internalServerError, reason: "Email result from gemini was undecodable")
+        }
+        return Email(from: email.from, to: email.to, subject: email.subject, date: email.date, body: responseText!)
     }
 }

@@ -11,14 +11,9 @@ struct geminiController: RouteCollection {
             return result
         }
         do {
-            print("entered")
-            let email: Email = try req.content.decode(Email.self)
-            print("passed the amil decode")
-            
+            let email: Email = try req.content.decode(Email.self) 
             let modifiedEmail = try await GeminiService.getDefaultArtificialResponse(email: email)
-            print("passedv the mofiied email")
             return try await modifiedEmail.encodeResponse(for: req)
-            print("passed encoding repsonse")
         } catch(let err) {
             print(err)
             throw Abort(.internalServerError)
