@@ -27,14 +27,8 @@ RUN mkdir /staging
 
 # Build the application, with optimizations, with static linking, and using jemalloc
 # N.B.: The static version of jemalloc is incompatible with the static Swift runtime.
-RUN --mount=type=cache,target=/build/.build \
-    swift build -c release \
-        --product EmailAnxietyBackend \
-        --static-swift-stdlib \
-        -Xlinker -ljemalloc && \
-    # Copy main executable to staging area
+RUN swift build -c release --product EmailAnxietyBackend && \
     cp "$(swift build -c release --show-bin-path)/EmailAnxietyBackend" /staging && \
-    # Copy resources bundled by SPM to staging area
     find -L "$(swift build -c release --show-bin-path)" -regex '.*\.resources$' -exec cp -Ra {} /staging \;
 
 

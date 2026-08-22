@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
+import FoundationNetworking
+#endif
 
 enum RequestError: Error {
     case requestError

@@ -2,6 +2,9 @@
 // this will just give me the important fields right when I encode
 
 import Foundation
+#if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
+import FoundationNetworking
+#endif
 import Vapor
 
 struct UserMessageLinks: Decodable {
