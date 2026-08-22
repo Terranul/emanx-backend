@@ -18,7 +18,7 @@ final class gmailService: Sendable {
  
     private func getURLRequest(path: String) throws -> URLRequest {
         guard let url = URL(string: "") else {
-            throw NSError()
+            throw RequestError.requestError
         }
         var urlRequest = URLRequest(url: url)
         urlRequest.setValue("Bearer \(self.accessCode)", forHTTPHeaderField: "Authorization")
