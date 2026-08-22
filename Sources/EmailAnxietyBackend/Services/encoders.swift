@@ -87,7 +87,7 @@ struct Email: Content {
 
     // Data is base-44 encoded utf-8
     init(body: Data) throws {
-        throw NSError()
+        throw RequestError.encodingError
         if let rawString: String = String(data: body, encoding: .utf8) {
             rawString.firstMatch(of: /From: (.*?)/)
         }
