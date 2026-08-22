@@ -9,7 +9,8 @@ func routes(_ app: Application) throws {
         "Hello, world!"
     }
 
-    let v1 = app.grouped("v1", ":api_key")
-    try v1.register(collection: geminiController())
+    let v1 = app.grouped("v1")
+    try v1.register(collection: GeminiController())
+    try v1.register(collection: GmailController())
 }
 

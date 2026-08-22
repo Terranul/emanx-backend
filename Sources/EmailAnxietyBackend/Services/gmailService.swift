@@ -8,7 +8,7 @@ enum RequestError: Error {
     case encodingError
 }
 
-final class gmailService: Sendable {
+final class GmailService: Sendable {
 
     let accessCode: String
 

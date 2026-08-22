@@ -1,7 +1,7 @@
 import Vapor
 
 func validateRequest(req: Request) -> (Response)? {
-    guard let apiKey = req.parameters.get("api_key") else {
+    guard let apiKey = req.headers.first(name: "api_key") else {
         let response = Response(status: HTTPResponseStatus.badRequest)
         response.body = Response.Body(string: "api_key missing")
         return response

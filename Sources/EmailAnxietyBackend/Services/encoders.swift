@@ -124,7 +124,11 @@ struct GeminiResponse: Decodable {
         let type: String
         let content: [GeminiContent]?
     }
-    let status: String
+    let status: String?
     let steps: [GeminiSteps]
+}
 
+struct EmailUpdateRequest: Decodable {
+    let gmailId: String
+    let email: Email
 }

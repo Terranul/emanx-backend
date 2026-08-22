@@ -1,6 +1,6 @@
 import Vapor
 
-struct geminiController: RouteCollection {
+struct GeminiController: RouteCollection {
 
     func boot(routes: any Vapor.RoutesBuilder) throws {
         routes.post("edit", use: getArtificial)

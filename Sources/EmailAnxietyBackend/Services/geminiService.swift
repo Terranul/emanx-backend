@@ -27,7 +27,7 @@ class GeminiService {
                                          You may not modify more than 30% of the message.
                                          The modification limitation may be overriden if it is impossible to accomplish one of the given goals without modifying more than 30% of the text input.
                                          """
-        let geminiBody = GeminiRequest(model: "gemini-3.6-flash-lite", input: textInput, system_instruction: systemInstructions)
+        let geminiBody = GeminiRequest(model: "gemini-3.6-flash", input: textInput, system_instruction: systemInstructions)
         request.httpBody = try JSONEncoder().encode(geminiBody)
         let response = try await URLSession.shared.data(for: request)
         let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: response.0)
