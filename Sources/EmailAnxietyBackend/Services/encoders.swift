@@ -1,6 +1,10 @@
 // gmail api is filled with things I don't need
 // this will just give me the important fields right when I encode
 
+enum GmailDecodingError: Error {
+    case NoData(String)
+}
+
 import Foundation
 #if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
 import FoundationNetworking
@@ -39,28 +43,67 @@ struct UserMessageLinks: Decodable {
     }
 }
 
+struct UserMessageResponse: Decodable {
+    let payload: UserMessage
+}
+
 struct UserMessage: Decodable {
     let mimeType: String?
-    let body: Body?
+    let body: Body
     let parts: [UserMessage]?
+    let headers: [Header]
     
     struct Body: Decodable {
+        let size: Int
         let data: String?
     }
 
+    struct Header: Decodable {
+        let name: String
+        let body: String
+    }
+
+    // refactor this later please
     func getEmail() throws -> Email? {
-        if (body == nil) {
-            for part: UserMessage in parts! {
-                if (mimeType == "text/plain") {
-                    return try part.getEmail()
+        var email = Email()
+        for header in headers {
+            switch (header.name) {
+                case "From":
+                    email.from = header.body
+                case "To":
+                    email.to = header.body
+                case "Subject":
+                    email.subject = header.body
+                default:
+                    continue   
+            }
+        }      
+        if (mimeType == "text/plain" && body.size != 0) {
+            if let rawString = getRawString(body.data!) {
+                email.body = rawString
+                return email
+            }
+        } 
+        if let parts {
+            for part in parts {
+                if (part.mimeType == "text/plain") {
+                    guard part.body.size != 0 else {
+                        // text/plain part entries can never have subcontent, so we can assume this message carries no body data
+                        throw GmailDecodingError.NoData("Body size is 0. Email is malformed")
+                    }
+                    if let rawString = getRawString(part.body.data!) {
+                        email.body = rawString
+                        return email
+                    }
                 }
             }
-        } else {
-            if let base44 = Data(base64Encoded: body!.data!) {
-                return try Email(body: base44)
-            } else {
-                return nil
-            }
+        }
+        return nil
+    }
+
+    private func getRawString(_ value: String) -> String? {
+        if let base44 = Data(base64Encoded: value) {
+            return String(data: base44, encoding: .utf8)
         }
         return nil
     }
@@ -83,6 +126,14 @@ struct Email: Content {
         self.subject = subject
         self.date = date
         self.body = body
+    }
+
+    init() {
+        self.from = ""
+        self.to = ""
+        self.subject = ""
+        self.date = nil
+        self.body = ""
     }
 
     // Data is base-44 encoded utf-8
@@ -128,7 +179,7 @@ struct GeminiResponse: Decodable {
     let steps: [GeminiSteps]
 }
 
-struct EmailUpdateRequest: Decodable {
+struct EmailRequest: Decodable {
     let gmailId: String
-    let email: Email
+    let email: Email?
 }

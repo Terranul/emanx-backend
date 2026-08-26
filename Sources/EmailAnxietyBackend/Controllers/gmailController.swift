@@ -1,5 +1,5 @@
 import Vapor
-//     /create /update /edit /notify
+//     /create /update /edit /notify /send /get /sendCred
 // 
 
 struct GmailController: RouteCollection {
@@ -7,10 +7,11 @@ struct GmailController: RouteCollection {
     func boot(routes: any Vapor.RoutesBuilder) throws {
         routes.post("create", use: writeEmail)
         routes.post("update", use: updateEmail)
+        routes.post("get", use: getDraft)
     }
 
     func writeEmail(req: Request) async throws -> Response {
-        if (validateRequest(req: req) == nil) {
+        if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
         guard let gmailCode = req.headers.first(name: "gmail") else {
@@ -25,16 +26,16 @@ struct GmailController: RouteCollection {
     }
 
     func updateEmail(req: Request) async throws -> Response {
-        if (validateRequest(req: req) == nil) {
+        if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
         guard let gmailCode = req.headers.first(name: "gmail") else {
             throw Abort(.badRequest, reason: "Missing google auth code in header")
         }
-        let emailInfo = try req.content.decode(EmailUpdateRequest.self)
+        let emailInfo = try req.content.decode(EmailRequest.self)
         let id = ""
         let gmailService  = GmailService(accessCode: gmailCode)
-        return try await self.createEmail(email: emailInfo.email) { email in
+        return try await self.createEmail(email: emailInfo.email!) { email in
             return try await gmailService.updateDraft(email: email, id: id)
         }
 
@@ -51,6 +52,31 @@ struct GmailController: RouteCollection {
             throw Abort(.internalServerError)
         }
     }
+
+    func getDraft(req: Request) async throws -> Response {
+        if (validateRequest(req: req) != nil) {
+            throw Abort(.forbidden)
+        }
+        guard let gmailCode = req.headers.first(name: "gmail") else {
+            throw Abort(.badRequest, reason: "Missing google auth code in header")
+        }
+        let gmailService  = GmailService(accessCode: gmailCode)
+        let gmailId = try req.content.decode(EmailRequest.self).gmailId
+        let email = try await gmailService.getDraft(code: gmailId)
+        return try await self.createEmail(email: email) { email in
+            return try await gmailService.writeDraft(email: email)
+        }
+    }
+
+    // func getEmail(req: Request) async throws -> Response {
+    //     if (validateRequest(req: req) != nil) {
+    //         throw Abort(.forbidden)
+    //     }
+    //     guard let gmailCode = req.headers.first(name: "gmail") else {
+    //         throw Abort(.badRequest, reason: "Missing google auth code in header")
+    //     }
+
+    // }
 
     
 

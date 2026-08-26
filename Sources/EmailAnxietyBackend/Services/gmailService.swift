@@ -17,10 +17,11 @@ final class GmailService: Sendable {
     }
  
     private func getURLRequest(path: String) throws -> URLRequest {
-        guard let url = URL(string: "") else {
+        guard let url = URL(string: path) else {
             throw RequestError.requestError
         }
         var urlRequest = URLRequest(url: url)
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("Bearer \(self.accessCode)", forHTTPHeaderField: "Authorization")
         return urlRequest
     }
@@ -37,13 +38,13 @@ final class GmailService: Sendable {
 
     func getMessage(code: String) async throws -> UserMessage {
         let request = try self.getURLRequest(path: "/gmail/v1/users/me/messages/\(code)?format=full")
-        var (data, response) = try await URLSession.shared.data(for: request)
-        var message = try JSONDecoder().decode(UserMessage.self, from: data)
-        return message
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let message = try JSONDecoder().decode(UserMessageResponse.self, from: data)
+        return message.payload
     }
 
     func getMessages(scope: Int) async throws -> [UserMessage] {
-        let links: [String] = await try getRecentMessageLinks(scope: scope).links
+        let links: [String] = try await getRecentMessageLinks(scope: scope).links
         return await withThrowingTaskGroup(of: UserMessage.self) { body in
         var messageResults = Array<UserMessage>()
             for link in links {
@@ -65,15 +66,13 @@ final class GmailService: Sendable {
     }
 
     func writeDraft(email: Email) async throws -> String{
-        guard let body: Data = Data(base64Encoded: email.getRFCEncoding()) else {
-            debugPrint("issue with encoding email string")
-            throw RequestError.encodingError
-        }
+        let stringBase64 = email.getRFCEncoding().data(using: .utf8)!.base64EncodedString()
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/drafts")
         request.httpMethod = "POST"
-        request.httpBody = body
-        let (data, response) = try await URLSession.shared.data(for: request)
-        let messageResponse = try JSONDecoder().decode(MessageResponse.self, from: data)
+        let body: [String : [String : String]] = ["message": ["raw": stringBase64]]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let messageResponse: MessageResponse = try JSONDecoder().decode(MessageResponse.self, from: data)
         return messageResponse.id
     }
 
@@ -89,5 +88,16 @@ final class GmailService: Sendable {
         let (data, response) = try await URLSession.shared.data(for: request)
         let messageResponse = try JSONDecoder().decode(MessageResponse.self, from: data)
         return messageResponse.id
+    }
+
+    func getDraft(code: String) async throws -> Email {
+        var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/drafts/\(code)")
+        request.httpMethod = "GET"
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let messageResponse: UserMessageResponse = try JSONDecoder().decode(UserMessageResponse.self, from: data)
+        if let email = try messageResponse.payload.getEmail() {
+            return email
+        }
+        throw RequestError.encodingError
     }
 }
