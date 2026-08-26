@@ -43,6 +43,10 @@ struct UserMessageLinks: Decodable {
     }
 }
 
+struct Draft: Decodable {
+    let message: UserMessageResponse
+}
+
 struct UserMessageResponse: Decodable {
     let payload: UserMessage
 }
@@ -60,7 +64,7 @@ struct UserMessage: Decodable {
 
     struct Header: Decodable {
         let name: String
-        let body: String
+        let value: String
     }
 
     // refactor this later please
@@ -69,11 +73,11 @@ struct UserMessage: Decodable {
         for header in headers {
             switch (header.name) {
                 case "From":
-                    email.from = header.body
+                    email.from = header.value
                 case "To":
-                    email.to = header.body
+                    email.to = header.value
                 case "Subject":
-                    email.subject = header.body
+                    email.subject = header.value
                 default:
                     continue   
             }

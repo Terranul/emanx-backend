@@ -43,7 +43,7 @@ struct GmailController: RouteCollection {
 
     func createEmail(email: Email, _ option: (Email) async throws -> String) async throws -> Response{
         do {
-            let emailCode = try await option(email)
+            let emailCode: String = try await option(email)
             let response = Response(status: .accepted, body: .init(string: "{emailCode: \(emailCode)}"))
             response.headers.contentType = .json
             return response
@@ -63,9 +63,7 @@ struct GmailController: RouteCollection {
         let gmailService  = GmailService(accessCode: gmailCode)
         let gmailId = try req.content.decode(EmailRequest.self).gmailId
         let email = try await gmailService.getDraft(code: gmailId)
-        return try await self.createEmail(email: email) { email in
-            return try await gmailService.writeDraft(email: email)
-        }
+        return try await email.encodeResponse(for: req)
     }
 
     // func getEmail(req: Request) async throws -> Response {

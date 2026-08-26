@@ -94,10 +94,20 @@ final class GmailService: Sendable {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/drafts/\(code)")
         request.httpMethod = "GET"
         let (data, _) = try await URLSession.shared.data(for: request)
-        let messageResponse: UserMessageResponse = try JSONDecoder().decode(UserMessageResponse.self, from: data)
-        if let email = try messageResponse.payload.getEmail() {
+        let messageResponse: Draft = try JSONDecoder().decode(Draft.self, from: data)
+        if let email = try messageResponse.message.payload.getEmail() {
             return email
         }
         throw RequestError.encodingError
+    }
+
+    func registerUser(gmail: String, notificationId: String) async throws {
+        var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/watch")
+        request.httpMethod = "POST"
+        let body = ["topicName", "projects/gmanx-505500/topics/notifyGmanx"]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let _ = try await URLSession.shared.data(for: request)
+        let userService: UserService = UserService()
+        await userService.addNotificationProxy(gmail: gmail, notificationId: notificationId)
     }
 }
