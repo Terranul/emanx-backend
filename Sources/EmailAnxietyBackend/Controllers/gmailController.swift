@@ -14,9 +14,7 @@ struct GmailController: RouteCollection {
         if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
-        guard let gmailCode = req.headers.first(name: "gmail") else {
-            throw Abort(.badRequest, reason: "Missing google auth code in header")
-        }
+        let gmailCode = try await extractAuthToken(req: req)
         let gmailService = GmailService(accessCode: gmailCode)
         let email = try req.content.decode(Email.self)
         // return try await self.createEmail(email: email, gmailService.writeDraft)
@@ -29,9 +27,7 @@ struct GmailController: RouteCollection {
         if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
-        guard let gmailCode = req.headers.first(name: "gmail") else {
-            throw Abort(.badRequest, reason: "Missing google auth code in header")
-        }
+        let gmailCode = try await extractAuthToken(req: req)
         let emailInfo = try req.content.decode(EmailRequest.self)
         let id = ""
         let gmailService  = GmailService(accessCode: gmailCode)
@@ -57,9 +53,7 @@ struct GmailController: RouteCollection {
         if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
-        guard let gmailCode = req.headers.first(name: "gmail") else {
-            throw Abort(.badRequest, reason: "Missing google auth code in header")
-        }
+        let gmailCode = try await extractAuthToken(req: req)
         let gmailService  = GmailService(accessCode: gmailCode)
         let gmailId = try req.content.decode(EmailRequest.self).gmailId
         let email = try await gmailService.getDraft(code: gmailId)

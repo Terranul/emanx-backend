@@ -5,15 +5,27 @@ In this state for testing purposes
 
 import Foundation
 
+struct User {
+    let notificationId: String
+    let refreshToken: String
+    let refreshExpiration: Date?
+    let token: String
+}
+
 actor UserInfo {
     private static let userInfo: UserInfo = UserInfo()
-    private var users: [String : String] = Dictionary<String, String>()
+    var users: [String: User] = [:]
 
     static var shared: UserInfo {
         return userInfo
     }
 
-    func addUser(gmail: String, notificationId: String) {
-        users[gmail] = notificationId
+    func addUser(user: User, gmail: String) {
+        print("user added to db")
+        users[gmail] = user
+    }
+
+    func getUser(gmail: String) -> User? {
+        return self.users[gmail]
     }
 }

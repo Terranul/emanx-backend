@@ -187,3 +187,24 @@ struct EmailRequest: Decodable {
     let gmailId: String
     let email: Email?
 }
+
+struct UserUpload: Decodable {
+    let gmail: String
+    let notificationId: String
+}
+
+struct GmailHistoryResponse: Decodable {
+    let history: [HistoryRecord]?
+}
+
+struct HistoryRecord: Decodable {
+    let messagesAdded: [MessageWrapper]?
+}
+
+struct MessageWrapper: Decodable {
+    let message: MessageIDOnly
+}
+
+struct MessageIDOnly: Decodable {
+    let id: String
+}

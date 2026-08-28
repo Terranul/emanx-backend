@@ -101,13 +101,18 @@ final class GmailService: Sendable {
         throw RequestError.encodingError
     }
 
-    func registerUser(gmail: String, notificationId: String) async throws {
+    // ensure you have uploaded the user information to the db prior to calling this
+    func registerUser(gmail: String) async throws {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/watch")
         request.httpMethod = "POST"
-        let body = ["topicName", "projects/gmanx-505500/topics/notifyGmanx"]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let body = """
+                               {
+                                    "topicName": "projects/gmanx-505500/topics/notifyGmanx",
+                                    "labelIds": ["INBOX"],
+                                    "labelFilterBehavior": "include"
+                               }
+                               """
+        request.httpBody = body.data(using: .utf8)
         let _ = try await URLSession.shared.data(for: request)
-        let userService: UserService = UserService()
-        await userService.addNotificationProxy(gmail: gmail, notificationId: notificationId)
     }
 }
