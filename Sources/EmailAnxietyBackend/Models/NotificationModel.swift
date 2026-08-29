@@ -6,7 +6,6 @@ In this state for testing purposes
 import Foundation
 
 struct User {
-    let notificationId: String
     let refreshToken: String
     let refreshExpiration: Date?
     let token: String

@@ -14,7 +14,7 @@ class UserService {
         if user.refreshExpiration == nil {
             var current = Date()
             current.addTimeInterval(UserService.TOKEN_EXPIRATION_TIME)
-            let newUser = User(notificationId: user.notificationId, refreshToken: user.refreshToken, refreshExpiration: current, token: user.token)
+            let newUser = User(refreshToken: user.refreshToken, refreshExpiration: current, token: user.token)
             await UserInfo.shared.addUser(user: newUser, gmail: gmail)
         } else {
             await UserInfo.shared.addUser(user: user, gmail: gmail)

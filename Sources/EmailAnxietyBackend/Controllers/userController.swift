@@ -21,7 +21,7 @@ struct UserController: RouteCollection {
         let gmailService = GmailService(accessCode: upload.authToken)
         try await gmailService.registerUser(gmail: upload.gmail)
         let userService = UserService()
-        let user = User(notificationId: upload.notificationId, refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken)
+        let user = User(refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken)
         await userService.uploadUser(user: user, gmail: upload.gmail)
         return Response(status: .accepted)
     }
