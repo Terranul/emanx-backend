@@ -113,6 +113,8 @@ final class GmailService: Sendable {
                                }
                                """
         request.httpBody = body.data(using: .utf8)
-        let _ = try await URLSession.shared.data(for: request)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        print("result:" + String(data: data, encoding: .utf8)!)
+
     }
 }

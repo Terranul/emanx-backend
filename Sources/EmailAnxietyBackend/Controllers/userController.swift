@@ -5,12 +5,12 @@ struct UserController: RouteCollection {
     struct RegisterUpload: Decodable {
         let authToken: String
         let refreshToken: String
-        let notificationId: String
         let gmail: String
     }
 
     func boot(routes: any Vapor.RoutesBuilder) throws {
         routes.post("register", use: register)
+        routes.post("notify", use: notify)
     }
 
     func register(req: Request) async throws -> Response {
@@ -26,17 +26,19 @@ struct UserController: RouteCollection {
         return Response(status: .accepted)
     }
 
-    // func nofify(req: Request) async throws -> Response {
-    //     if (validateRequest(req: req) != nil) {
-    //         throw Abort(.forbidden)
-    //     }
-    //     let data: HistoryResponse = try req.content.decode(HistoryResponse.self)
-    //     let newEmails = data.history.map { cur in
-    //         cur.added
-    //     }
+    func notify(req: Request) async throws -> Response {
+        print("hit notfiy")
+        return Response(status: .ok)
+        // if (validateRequest(req: req) != nil) {
+        //     throw Abort(.forbidden)
+        // }
+        // let data: HistoryResponse = try req.content.decode(HistoryResponse.self)
+        // let newEmails = data.history.map { cur in
+        //     cur.added
+        // }
 
 
-    // }
+    }
 
     
 }

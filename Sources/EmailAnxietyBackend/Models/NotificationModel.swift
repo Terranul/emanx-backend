@@ -4,6 +4,10 @@ In this state for testing purposes
 */
 
 import Foundation
+#if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
+import FoundationNetworking
+#endif
+
 
 struct User {
     let refreshToken: String
