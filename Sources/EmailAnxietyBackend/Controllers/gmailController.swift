@@ -28,8 +28,8 @@ struct GmailController: RouteCollection {
             throw Abort(.forbidden)
         }
         let gmailCode = try await extractAuthToken(req: req)
-        let emailInfo = try req.content.decode(EmailRequest.self)
-        let id = ""
+        let emailInfo: EmailRequest = try req.content.decode(EmailRequest.self)
+        let id = emailInfo.gmailId
         let gmailService  = GmailService(accessCode: gmailCode)
         return try await self.createEmail(email: emailInfo.email!) { email in
             return try await gmailService.updateDraft(email: email, id: id)
@@ -37,7 +37,7 @@ struct GmailController: RouteCollection {
 
     }
 
-    func createEmail(email: Email, _ option: (Email) async throws -> String) async throws -> Response{
+    func createEmail(email: Email, _ option: (Email) async throws -> String) async throws -> Response {
         do {
             let emailCode: String = try await option(email)
             let response = Response(status: .accepted, body: .init(string: "{emailCode: \(emailCode)}"))

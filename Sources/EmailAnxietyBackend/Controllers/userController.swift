@@ -8,6 +8,15 @@ struct UserController: RouteCollection {
         let gmail: String
     }
 
+    struct PubSubResponse: Decodable {
+        let data: String
+    }
+
+    struct HistoryResponse: Decodable {
+        let emailAddress: String
+        let historyId: String
+    }
+
     func boot(routes: any Vapor.RoutesBuilder) throws {
         routes.post("register", use: register)
         routes.post("notify", use: notify)
@@ -29,16 +38,14 @@ struct UserController: RouteCollection {
     func notify(req: Request) async throws -> Response {
         print("hit notfiy")
         return Response(status: .ok)
-        // if (validateRequest(req: req) != nil) {
-        //     throw Abort(.forbidden)
-        // }
-        // let data: HistoryResponse = try req.content.decode(HistoryResponse.self)
-        // let newEmails = data.history.map { cur in
-        //     cur.added
-        // }
-
+        if (validateRequest(req: req) != nil) {
+            throw Abort(.forbidden)
+        }
+        let pbsb = try req.content.decode(PubSubResponse.self)
+        let data = Data(base64Encoded: pbsb.data)!
+        let history = try JSONDecoder().decode(UserController.HistoryResponse.self, from: data)
+        let gmailService = GmailService(accessCode: try await UserService().getOauthToken(gmail: history.emailAddress))
+        let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
 
     }
-
-    
 }

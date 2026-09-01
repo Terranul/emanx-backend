@@ -2,14 +2,34 @@ import Foundation
 #if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
 import FoundationNetworking
 #endif
+import WebPush
+import Vapor
 
 
 class UserService {
+
+    enum NotificationError: Error {
+        case UndefinedUser
+    }
+
+    let pushManager: WebPushManager
 
     struct TokenResponse: Decodable {
         let access_token: String
         let expires_in: Int
         let token_type: String
+    }
+
+    init() {
+        guard
+            let rawVAPIDConfiguration = Environment.get("VAPID-CONFIG"),
+            let vapidConfiguration = try? JSONDecoder().decode(
+                VAPID.Configuration.self, from: Data(rawVAPIDConfiguration.utf8))
+        else {
+            fatalError(
+                "VAPID keys are unavailable, please generate one and add it to the environment.")
+        }
+        self.pushManager = WebPushManager(vapidConfiguration: vapidConfiguration)
     }
 
     static let TOKEN_EXPIRATION_TIME: Double = 3400 // 3600 is standard, use 3400 to account for processing time
@@ -62,8 +82,35 @@ class UserService {
         return response.access_token
     }
 
+    func uploadSubscription(subscription: Subscriber, gmail: String) async {
+        await UserInfo.shared.addSubscription(subscription: subscription, gmail: gmail)
+    }
 
+    func getSubscription(gmail: String) async -> Subscriber? {
+        return await UserInfo.shared.getSubscription(gmail: gmail)
+    }
 
-
-
+    func sendNotification(body: Data, gmail: String) async throws {
+        guard let subscription: Subscriber = await self.getSubscription(gmail: gmail) else {
+            throw NotificationError.UndefinedUser
+        }
+        do {
+            try await self.pushManager.send(
+                notification: PushMessage.Notification(
+                    destination: URL(string: "/")!, // the "/" should define the origin specified in the manifest
+                    title: "Test Notification",
+                    body: "Hello, World!"
+                ),
+                to: subscription
+            )
+        } catch is BadSubscriberError {
+            /// The subscription is no longer valid and should be removed.
+        } catch is MessageTooLargeError {
+            /// The message was too long and should be shortened.
+        } catch is PushServiceError {
+            /// The push service ran into trouble. error.response may help here.
+        } catch {
+            /// An unknown error occurred.
+        }
+    }
 }

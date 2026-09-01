@@ -193,18 +193,20 @@ struct UserUpload: Decodable {
     let notificationId: String
 }
 
-struct GmailHistoryResponse: Decodable {
-    let history: [HistoryRecord]?
+struct HistoryResponse: Decodable {
+    let history: [History]
 }
 
-struct HistoryRecord: Decodable {
-    let messagesAdded: [MessageWrapper]?
+struct History: Decodable {
+    let messagesAdded: [MessagesAdded]
 }
 
-struct MessageWrapper: Decodable {
-    let message: MessageIDOnly
+struct MessagesAdded: Decodable {
+    let message: Message
 }
 
-struct MessageIDOnly: Decodable {
+struct Message: Decodable {
     let id: String
 }
+
+

@@ -32,6 +32,10 @@ let package = Package(
         .package(
             url: "https://github.com/vapor/fluent-postgres-driver.git",
             from: "2.0.0"
+        ),
+        .package(
+            url: "https://github.com/mochidev/swift-webpush.git", 
+            .upToNextMinor(from: "0.4.1")
         )
     ],
 
@@ -63,7 +67,8 @@ let package = Package(
                 .product(
                     name: "FluentPostgresDriver",
                     package: "fluent-postgres-driver"
-                )
+                ),
+                .product(name: "WebPush", package: "swift-webpush")
             ],
 
             swiftSettings: swiftSettings

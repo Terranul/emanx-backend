@@ -27,7 +27,7 @@ final class GmailService: Sendable {
     }
  
     func getRecentMessageLinks(scope: Int) async throws -> UserMessageLinks {
-        var (data, response) = try await URLSession.shared.data(for: try getURLRequest(path: ""))
+        let (data, response) = try await URLSession.shared.data(for: try getURLRequest(path: ""))
         guard let httpResponse = response as? HTTPURLResponse else {
             throw RequestError.requestError
         }
@@ -44,22 +44,20 @@ final class GmailService: Sendable {
     }
 
     func getMessages(scope: Int) async throws -> [UserMessage] {
-        let links: [String] = try await getRecentMessageLinks(scope: scope).links
-        return await withThrowingTaskGroup(of: UserMessage.self) { body in
-        var messageResults = Array<UserMessage>()
+        let links = try await getRecentMessageLinks(scope: scope).links
+        return try await getMessages(links: links)
+    }
+
+    func getMessages(links: [String]) async throws -> [UserMessage] {
+        return try await withThrowingTaskGroup(of: UserMessage.self) { group in
             for link in links {
-                body.addTask {
-                    return try await self.getMessage(code: link)
+                group.addTask {
+                    try await self.getMessage(code: link)
                 }
-                while !body.isEmpty {
-                    do {
-                        if let message = try await body.next() {
-                            messageResults.append(message)
-                        }
-                    } catch {
-                        body.cancelAll()
-                    }
-                }
+            }
+            var messageResults = [UserMessage]()
+            while let message = try await group.next() {
+                messageResults.append(message)
             }
             return messageResults
         }
@@ -78,14 +76,12 @@ final class GmailService: Sendable {
 
     // important to note that the resulting id returned will not be the same as the one given
     func updateDraft(email: Email, id: String) async throws -> String {
-         guard let body: Data = Data(base64Encoded: email.getRFCEncoding()) else {
-            debugPrint("issue with encoding email string")
-            throw RequestError.encodingError
-        }
+        let stringBase64 = email.getRFCEncoding().data(using: .utf8)!.base64EncodedString()
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/drafts/\(id)")
         request.httpMethod = "PUT"
-        request.httpBody = body
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let body: [String : [String : String]] = ["message": ["raw": stringBase64]]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, _) = try await URLSession.shared.data(for: request)
         let messageResponse = try JSONDecoder().decode(MessageResponse.self, from: data)
         return messageResponse.id
     }
@@ -115,6 +111,19 @@ final class GmailService: Sendable {
         request.httpBody = body.data(using: .utf8)
         let (data, _) = try await URLSession.shared.data(for: request)
         print("result:" + String(data: data, encoding: .utf8)!)
+    }
 
+    func getHistoryEmails(historyId: String) async throws -> [Email] {
+        var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=\(historyId)")
+        request.httpMethod = "POST"
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let history = try JSONDecoder().decode(HistoryResponse.self, from: data)
+        let links: [String] = history.history[0].messagesAdded.map { addedMessage in
+            return addedMessage.message.id
+        }
+        let result: [UserMessage] = try await getMessages(links: links)
+        return try result.map { userMessage in
+            return try userMessage.getEmail()!
+        }
     }
 }

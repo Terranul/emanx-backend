@@ -7,6 +7,7 @@ import Foundation
 #if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
 import FoundationNetworking
 #endif
+import WebPush
 
 
 struct User {
@@ -18,6 +19,7 @@ struct User {
 actor UserInfo {
     private static let userInfo: UserInfo = UserInfo()
     var users: [String: User] = [:]
+    var subscriptions: [String: Subscriber] = [:]
 
     static var shared: UserInfo {
         return userInfo
@@ -30,5 +32,13 @@ actor UserInfo {
 
     func getUser(gmail: String) -> User? {
         return self.users[gmail]
+    }
+
+    func addSubscription(subscription: Subscriber, gmail: String) {
+        subscriptions[gmail] = subscription
+    }
+
+    func getSubscription(gmail: String) -> Subscriber? {
+        return self.subscriptions[gmail]
     }
 }
