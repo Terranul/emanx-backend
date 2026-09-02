@@ -1,6 +1,9 @@
 import Vapor
+import WebPush
 
 struct UserController: RouteCollection {
+
+    let userService = UserService()
 
     struct RegisterUpload: Decodable {
         let authToken: String
@@ -17,9 +20,20 @@ struct UserController: RouteCollection {
         let historyId: String
     }
 
+    struct WebPushOptions: Codable, Content, Hashable, Sendable {
+        //static let defaultContentType = HTTPMediaType(type: "application", subType: "webpush-options+json")
+        var vapid: VAPID.Key.ID
+}
+
     func boot(routes: any Vapor.RoutesBuilder) throws {
         routes.post("register", use: register)
+
+        // used for Pub/Sub only
         routes.post("notify", use: notify)
+
+        // used for PWA only
+        routes.get("vapidKey", use: getVapidKey)
+        routes.post("subscribe", use: subscribe)
     }
 
     func register(req: Request) async throws -> Response {
@@ -46,6 +60,16 @@ struct UserController: RouteCollection {
         let history = try JSONDecoder().decode(UserController.HistoryResponse.self, from: data)
         let gmailService = GmailService(accessCode: try await UserService().getOauthToken(gmail: history.emailAddress))
         let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
+    }
 
+    func getVapidKey(req: Request) async throws -> WebPushOptions {
+        return WebPushOptions(vapid: UserService().getVapidPublicKey())
+    }
+
+    func subscribe(req: Request) async throws -> Response {
+        let subscription = try req.content.decode(Subscriber.self, as: .jsonAPI)
+        let gmailCode = try await extractAuthToken(req: req)
+        await self.userService.uploadSubscription(subscription: subscription, gmail: gmailCode)
+        return Response(status: .ok)
     }
 }

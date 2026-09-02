@@ -6,7 +6,7 @@ import WebPush
 import Vapor
 
 
-class UserService {
+final class UserService: Sendable {
 
     enum NotificationError: Error {
         case UndefinedUser
@@ -94,23 +94,17 @@ class UserService {
         guard let subscription: Subscriber = await self.getSubscription(gmail: gmail) else {
             throw NotificationError.UndefinedUser
         }
-        do {
-            try await self.pushManager.send(
-                notification: PushMessage.Notification(
-                    destination: URL(string: "/")!, // the "/" should define the origin specified in the manifest
-                    title: "Test Notification",
-                    body: "Hello, World!"
-                ),
-                to: subscription
-            )
-        } catch is BadSubscriberError {
-            /// The subscription is no longer valid and should be removed.
-        } catch is MessageTooLargeError {
-            /// The message was too long and should be shortened.
-        } catch is PushServiceError {
-            /// The push service ran into trouble. error.response may help here.
-        } catch {
-            /// An unknown error occurred.
-        }
+        try await self.pushManager.send(
+            notification: PushMessage.Notification(
+                destination: URL(string: "/")!,  // the "/" should define the origin specified in the manifest
+                title: "Test Notification",
+                body: "Hello, World!"
+            ),
+            to: subscription
+        )
+    }
+
+    func getVapidPublicKey() -> VAPID.Key.ID {
+        return pushManager.nextVAPIDKeyID
     }
 }
