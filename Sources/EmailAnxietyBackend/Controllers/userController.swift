@@ -12,7 +12,10 @@ struct UserController: RouteCollection {
     }
 
     struct PubSubResponse: Decodable {
-        let data: String
+        let message: DataResponse
+        struct DataResponse: Decodable {
+            let data: String
+        }
     }
 
     struct HistoryResponse: Decodable {
@@ -49,17 +52,23 @@ struct UserController: RouteCollection {
         return Response(status: .accepted)
     }
 
+    // history id from sept2: "historyId": "672329"
+
     func notify(req: Request) async throws -> Response {
         print("hit notfiy")
-        return Response(status: .ok)
-        if (validateRequest(req: req) != nil) {
-            throw Abort(.forbidden)
-        }
         let pbsb = try req.content.decode(PubSubResponse.self)
-        let data = Data(base64Encoded: pbsb.data)!
+        print("passed pbsb decoding")
+        let data = Data(base64Encoded: pbsb.message.data)!
+        print("passed data encoding")
         let history = try JSONDecoder().decode(UserController.HistoryResponse.self, from: data)
+        print("passed history decoding")
         let gmailService = GmailService(accessCode: try await UserService().getOauthToken(gmail: history.emailAddress))
+        print("passed gmail service")
         let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
+        print("passed get histroy emails")
+        try await self.userService.sendNotification(body: JSONEncoder().encode(newEmails[0]), gmail: history.emailAddress)
+        print("passed send notficiation")
+        return Response(status: .ok)
     }
 
     func getVapidKey(req: Request) async throws -> WebPushOptions {

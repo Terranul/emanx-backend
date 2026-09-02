@@ -34,8 +34,8 @@ let package = Package(
             from: "2.0.0"
         ),
         .package(
-            url: "https://github.com/mochidev/swift-webpush.git", 
-            .upToNextMinor(from: "0.4.1")
+            url: "https://github.com/Terranul/swift-webpush-linux.git",
+            branch: "main"
         )
     ],
 
@@ -68,7 +68,7 @@ let package = Package(
                     name: "FluentPostgresDriver",
                     package: "fluent-postgres-driver"
                 ),
-                .product(name: "WebPush", package: "swift-webpush")
+                .product(name: "WebPush", package: "swift-webpush-linux")
             ],
 
             swiftSettings: swiftSettings

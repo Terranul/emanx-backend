@@ -198,7 +198,7 @@ struct HistoryResponse: Decodable {
 }
 
 struct History: Decodable {
-    let messagesAdded: [MessagesAdded]
+    let messagesAdded: [MessagesAdded]?
 }
 
 struct MessagesAdded: Decodable {

@@ -37,15 +37,16 @@ async function getVapidPublicKey() {
 
 async function registerSubscription() {
     await createNewSubscription();
-
+    console.log(subscription.options.applicationServerKey)
     const subscriptionStatusResponse = await fetch("/v1/subscribe", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "gmail": "Testing"
         },
         body: JSON.stringify({
             ...subscription.toJSON(),
-            applicationServerKey: subscription.options.applicationServerKey
+            applicationServerKey: ""
         })
     });
 }

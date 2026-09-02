@@ -94,11 +94,12 @@ final class UserService: Sendable {
         guard let subscription: Subscriber = await self.getSubscription(gmail: gmail) else {
             throw NotificationError.UndefinedUser
         }
+        print("in send notification")
         try await self.pushManager.send(
             notification: PushMessage.Notification(
                 destination: URL(string: "/")!,  // the "/" should define the origin specified in the manifest
                 title: "Test Notification",
-                body: "Hello, World!"
+                body: String(data: body, encoding: .utf8)
             ),
             to: subscription
         )

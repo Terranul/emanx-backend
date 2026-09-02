@@ -37,8 +37,10 @@ final class GmailService: Sendable {
     }
 
     func getMessage(code: String) async throws -> UserMessage {
-        let request = try self.getURLRequest(path: "/gmail/v1/users/me/messages/\(code)?format=full")
+        var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/messages/\(code)?format=full")
+        request.httpMethod = "GET"
         let (data, _) = try await URLSession.shared.data(for: request)
+        print(String(data: data, encoding: .utf8)!)
         let message = try JSONDecoder().decode(UserMessageResponse.self, from: data)
         return message.payload
     }
@@ -115,12 +117,22 @@ final class GmailService: Sendable {
 
     func getHistoryEmails(historyId: String) async throws -> [Email] {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=\(historyId)")
-        request.httpMethod = "POST"
+        request.httpMethod = "GET"
         let (data, _) = try await URLSession.shared.data(for: request)
+        print("pre decoding")
+        print(String(data: data, encoding: .utf8)!)
         let history = try JSONDecoder().decode(HistoryResponse.self, from: data)
-        let links: [String] = history.history[0].messagesAdded.map { addedMessage in
+        print("post decoding")
+        let messagesAddedHistory = history.history.first { cur in
+            return  cur.messagesAdded != nil
+        }
+        guard let messagesAdded = messagesAddedHistory?.messagesAdded else {
+            throw RequestError.requestError
+        }
+        let links: [String] = messagesAdded.map { addedMessage in
             return addedMessage.message.id
         }
+        print("made it past finding all id's")
         let result: [UserMessage] = try await getMessages(links: links)
         return try result.map { userMessage in
             return try userMessage.getEmail()!
