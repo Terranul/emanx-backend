@@ -30,7 +30,7 @@ let package = Package(
 
         // PostgreSQL driver for Fluent
         .package(
-            url: "https://github.com/vapor/fluent-postgres-driver.git",
+            url: "https://github.com/supabase/supabase-swift.git",
             from: "2.0.0"
         ),
         .package(
@@ -60,13 +60,8 @@ let package = Package(
                 ),
 
                 .product(
-                    name: "Fluent",
-                    package: "fluent"
-                ),
-
-                .product(
-                    name: "FluentPostgresDriver",
-                    package: "fluent-postgres-driver"
+                    name: "Supabase",
+                    package: "supabase-swift"
                 ),
                 .product(name: "WebPush", package: "swift-webpush-linux")
             ],

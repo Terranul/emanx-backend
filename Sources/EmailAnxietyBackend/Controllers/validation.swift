@@ -14,8 +14,6 @@ func validateRequest(req: Request) -> (Response)? {
 }
 
 func extractAuthToken(req: Request) async throws -> String {
-    guard let gmail = req.headers.first(name: "gmail") else {
-        throw Abort(.badRequest, reason: "Missing google auth code in header")
-    }
-    return try await UserService().getOauthToken(gmail: gmail)
+    let code = try req.parameters.require("user")
+    return try await UserService().getOauthToken(code: code)
 }

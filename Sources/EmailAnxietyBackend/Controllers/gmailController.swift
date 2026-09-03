@@ -4,22 +4,30 @@ import Vapor
 
 struct GmailController: RouteCollection {
 
+    struct DraftsResponse: Content {
+        let drafts: [EmailResponse]
+    }
+
+    let userService = UserService()
+
     func boot(routes: any Vapor.RoutesBuilder) throws {
-        routes.post("create", use: writeEmail)
-        routes.post("update", use: updateEmail)
-        routes.post("get", use: getDraft)
+        routes.put(["users", ":user", "drafts"], use: writeEmail)
+        routes.patch(["users", ":user", "drafts", ":draft"], use: updateEmail)
+        routes.get(["users", ":user", "drafts", ":draft"], use: getDrafts)
     }
 
     func writeEmail(req: Request) async throws -> Response {
         if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
-        let gmailCode = try await extractAuthToken(req: req)
+        let userCode: String = try req.parameters.require("user")
+        let gmailCode = try await userService.getOauthToken(code: userCode)
         let gmailService = GmailService(accessCode: gmailCode)
-        let email = try req.content.decode(Email.self)
-        // return try await self.createEmail(email: email, gmailService.writeDraft)
-        return try await self.createEmail(email: email) { email in
+        let emailInfo = try req.content.decode(EmailRequest.self)
+        return try await self.createEmail(email: emailInfo.email!) { email in
             return try await gmailService.writeDraft(email: email)
+        } databaseOperation: { emailCode in
+            try await userService.createDatabaseDraft(draftId: emailCode, emailId: emailInfo.gmailId, userCode: try req.parameters.require("user"))
         }
     }
 
@@ -33,13 +41,15 @@ struct GmailController: RouteCollection {
         let gmailService  = GmailService(accessCode: gmailCode)
         return try await self.createEmail(email: emailInfo.email!) { email in
             return try await gmailService.updateDraft(email: email, id: id)
-        }
-
+        } databaseOperation: { emailCode in
+            try await userService.editDatabaseDraft(newDraftId: emailCode, emailId: emailInfo.gmailId)
+        }   
     }
 
-    func createEmail(email: Email, _ option: (Email) async throws -> String) async throws -> Response {
+    func createEmail(email: Email, _ option: (Email) async throws -> String, databaseOperation: (String) async throws -> Void) async throws -> Response {
         do {
             let emailCode: String = try await option(email)
+            try await databaseOperation(emailCode)
             let response = Response(status: .accepted, body: .init(string: "{emailCode: \(emailCode)}"))
             response.headers.contentType = .json
             return response
@@ -49,16 +59,19 @@ struct GmailController: RouteCollection {
         }
     }
 
-    func getDraft(req: Request) async throws -> Response {
+    func getDrafts(req: Request) async throws -> Response {
         if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
-        let gmailCode = try await extractAuthToken(req: req)
-        let gmailService  = GmailService(accessCode: gmailCode)
-        let gmailId = try req.content.decode(EmailRequest.self).gmailId
-        let email = try await gmailService.getDraft(code: gmailId)
-        return try await email.encodeResponse(for: req)
+        let userCode = try req.parameters.require("user")
+        let drafts = try await userService.getEmails(userCode: userCode)
+        let response = DraftsResponse(drafts: drafts)
+        return try await response.encodeResponse(for: req)
     }
+
+    // func getDraft(req: Request) async throws -> Response {
+
+    // }
 
     // func getEmail(req: Request) async throws -> Response {
     //     if (validateRequest(req: req) != nil) {

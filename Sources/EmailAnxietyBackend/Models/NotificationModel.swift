@@ -9,6 +9,9 @@ import FoundationNetworking
 #endif
 import WebPush
 
+typealias Gmail = String
+typealias UserCode = String
+
 
 struct User {
     let refreshToken: String
@@ -18,27 +21,27 @@ struct User {
 
 actor UserInfo {
     private static let userInfo: UserInfo = UserInfo()
-    var users: [String: User] = [:]
-    var subscriptions: [String: Subscriber] = [:]
+    var users: [UserCode: User] = [:]
+    var subscriptions: [Gmail: Subscriber] = [:]
 
     static var shared: UserInfo {
         return userInfo
     }
 
-    func addUser(user: User, gmail: String) {
+    func addUser(user: User, code: UserCode) {
         print("user added to db")
-        users[gmail] = user
+        users[code] = user
     }
 
-    func getUser(gmail: String) -> User? {
-        return self.users[gmail]
+    func getUser(code: UserCode) -> User? {
+        return self.users[code]
     }
 
-    func addSubscription(subscription: Subscriber, gmail: String) {
+    func addSubscription(subscription: Subscriber, gmail: Gmail) {
         subscriptions[gmail] = subscription
     }
 
-    func getSubscription(gmail: String) -> Subscriber? {
+    func getSubscription(gmail: Gmail) -> Subscriber? {
         return self.subscriptions[gmail]
     }
 }

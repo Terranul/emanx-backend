@@ -8,7 +8,6 @@ struct UserController: RouteCollection {
     struct RegisterUpload: Decodable {
         let authToken: String
         let refreshToken: String
-        let gmail: String
     }
 
     struct PubSubResponse: Decodable {
@@ -29,10 +28,11 @@ struct UserController: RouteCollection {
 }
 
     func boot(routes: any Vapor.RoutesBuilder) throws {
-        routes.post("register", use: register)
+        routes.put(["users", ":email"], use: register)
+        //routes.post("getEmails", user: getEmails)
 
         // used for Pub/Sub only
-        routes.post("notify", use: notify)
+        routes.post(["users", ":user"], use: notify)
 
         // used for PWA only
         routes.get("vapidKey", use: getVapidKey)
@@ -40,16 +40,17 @@ struct UserController: RouteCollection {
     }
 
     func register(req: Request) async throws -> Response {
+        // TODO add email field to the User struct
         if (validateRequest(req: req) != nil) {
             throw Abort(.forbidden)
         }
         let upload: UserController.RegisterUpload = try req.content.decode(RegisterUpload.self)
         let gmailService = GmailService(accessCode: upload.authToken)
-        try await gmailService.registerUser(gmail: upload.gmail)
+        try await gmailService.registerUser()
         let userService = UserService()
         let user = User(refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken)
-        await userService.uploadUser(user: user, gmail: upload.gmail)
-        return Response(status: .accepted)
+        let code: UUID = await userService.uploadUser(user: user)
+        return try await ["code" : code.uuidString].encodeResponse(for: req)
     }
 
     // history id from sept2: "historyId": "672329"
@@ -81,4 +82,10 @@ struct UserController: RouteCollection {
         await self.userService.uploadSubscription(subscription: subscription, gmail: gmailCode)
         return Response(status: .ok)
     }
+
+    // func getEmails(req: Request) async throws -> [EmailResponse] {
+    //     let emails =  try await userService.getEmails()
+    //     let body: [String: [EmailResponse]] = ["emails": emails]
+    //     return body.ecode
+    // }
 }

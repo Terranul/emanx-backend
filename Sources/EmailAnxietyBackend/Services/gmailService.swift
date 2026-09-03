@@ -100,7 +100,7 @@ final class GmailService: Sendable {
     }
 
     // ensure you have uploaded the user information to the db prior to calling this
-    func registerUser(gmail: String) async throws {
+    func registerUser() async throws {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/watch")
         request.httpMethod = "POST"
         let body = """
