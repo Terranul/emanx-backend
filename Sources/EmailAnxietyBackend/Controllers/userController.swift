@@ -22,6 +22,10 @@ struct UserController: RouteCollection {
         let historyId: String
     }
 
+    struct NotifyResponse: Content {
+        let senderEmails: [EmailResponse.SenderEmail]
+    }
+
     struct WebPushOptions: Codable, Content, Hashable, Sendable {
         //static let defaultContentType = HTTPMediaType(type: "application", subType: "webpush-options+json")
         var vapid: VAPID.Key.ID
@@ -65,8 +69,9 @@ struct UserController: RouteCollection {
         let gmailService = GmailService(accessCode: try await extractAuthToken(req: req))
         print("passed gmail service")
         let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
-        print("passed get histroy emails")
-        try await self.userService.sendNotification(body: JSONEncoder().encode(newEmails[0]), gmail: history.emailAddress)
+        let emailResponses = try await self.userService.addEmails(emails: newEmails)
+        let notifyResponse = NotifyResponse(senderEmails: emailResponses)
+        try await userService.sendNotification(body: try JSONEncoder().encode(notifyResponse), gmail: history.emailAddress)
         print("passed send notficiation")
         return Response(status: .ok)
     }

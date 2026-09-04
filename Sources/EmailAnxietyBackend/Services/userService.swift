@@ -111,5 +111,30 @@ final class UserService: Sendable {
     func editDatabaseDraft(newDraftId draftId: String, emailId: String) async throws {
         try await EmailModel().editDraft(emailId: emailId, newDraftId: draftId)
     }
+
+    func addEmail(email: Email) async throws -> String {
+        let emailId = UUID().uuidString
+        let supabaseEmail = SupabaseEmail(email_id: emailId, subject: email.subject, recipient: email.to, sender: email.from, body: email.body)
+        try await EmailModel().addEmail(email: supabaseEmail)
+        return emailId
+    }
+
+    func addEmails(emails: [Email]) async throws -> [EmailResponse.SenderEmail] {
+         return try await withThrowingTaskGroup { body in
+            for email in emails {
+                body.addTask {
+                    let emailId = try await self.addEmail(email: email)
+                    return EmailResponse.SenderEmail(emailId: emailId, body: email)
+                }
+            }
+            var result: [EmailResponse.SenderEmail] = []
+            while !body.isEmpty {
+                result.append(try await body.next()!)
+            }
+            return result
+        }
+    }
+
+    
 }
 

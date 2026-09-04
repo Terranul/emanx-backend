@@ -1,5 +1,4 @@
 import Vapor
-import Fluent
 
 /// configures your application
 func configure(_ app: Application) async throws {

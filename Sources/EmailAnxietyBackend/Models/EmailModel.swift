@@ -22,8 +22,9 @@ struct SupabaseEmail: Codable {
     let sender: String
     let body: String
 
-    func getEmail() -> Email {
-        return Email(from: sender, to: recipient, subject: subject, date: nil, body: body)
+    func getEmail() -> EmailResponse.SenderEmail {
+        let email = Email(from: sender, to: recipient, subject: subject, date: nil, body: body)
+        return EmailResponse.SenderEmail(emailId: self.email_id, body: email)
     }
 }
 
@@ -39,9 +40,15 @@ struct SupabaseEmailResponse: Codable {
 }
 
 struct EmailResponse: Codable {
+
+    struct SenderEmail: Codable {
+        let emailId: String
+        let body: Email
+    }
+
     let stage: Int
     let draftId: String
-    let email: Email
+    let email: SenderEmail
 }
 
 struct SupabaseEmailResponseRequest: Codable {
@@ -50,7 +57,6 @@ struct SupabaseEmailResponseRequest: Codable {
     let email_id: String
     let usercode: String
 }
-
 
 class EmailModel {
 
@@ -98,6 +104,7 @@ class EmailModel {
                     .eq("email_id", value: emailId)
                     .execute()
     }
+
 }
 
 
