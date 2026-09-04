@@ -1,5 +1,4 @@
 import Vapor
-import FluentPostgresDriver
 import Fluent
 
 /// configures your application

@@ -22,17 +22,11 @@ let package = Package(
             from: "2.101.0"
         ),
 
-        // Fluent ORM
-        .package(
-            url: "https://github.com/vapor/fluent.git",
-            from: "4.0.0"
-        ),
-
-        // PostgreSQL driver for Fluent
         .package(
             url: "https://github.com/supabase/supabase-swift.git",
             from: "2.0.0"
         ),
+        
         .package(
             url: "https://github.com/Terranul/swift-webpush-linux.git",
             branch: "main"

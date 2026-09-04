@@ -46,7 +46,8 @@ struct UserController: RouteCollection {
         try await gmailService.registerUser()
         let userService = UserService()
         let code = UUID().uuidString
-        let user = User(refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken, userCode: code)
+        let gmail = try req.parameters.require("email")
+        let user = User(refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken, userCode: code, gmail: gmail)
         try await userService.uploadUser(user: user)
         return try await ["code" : code].encodeResponse(for: req)
     }

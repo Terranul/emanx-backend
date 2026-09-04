@@ -39,7 +39,7 @@ final class UserService: Sendable {
         if user.refreshExpiration == nil {
             var current = Date()
             current.addTimeInterval(UserService.TOKEN_EXPIRATION_TIME)
-            let newUser = User(refreshToken: user.refreshToken, refreshExpiration: current, token: user.token, userCode: user.userCode)
+            let newUser = User(refreshToken: user.refreshToken, refreshExpiration: current, token: user.token, userCode: user.userCode, gmail: user.gmail)
             try await notificationModel.setUser(user: newUser)
         } else {
             try await notificationModel.setUser(user: user)

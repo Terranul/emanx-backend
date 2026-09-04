@@ -20,9 +20,10 @@ struct User {
     let refreshExpiration: Date?
     let token: String
     let userCode: UserCode
+    let gmail: String
 
     func supabaseConvert() -> UserSupabase {
-        return UserSupabase(usercode: userCode, refresh_expiration: refreshExpiration!, auth_code: token, refresh_code: refreshToken)
+        return UserSupabase(usercode: userCode, refresh_expiration: refreshExpiration!, auth_code: token, refresh_code: refreshToken, gmail: gmail)
     }
 }
 
@@ -31,9 +32,10 @@ struct UserSupabase: Codable {
     let refresh_expiration: Date
     let auth_code: String
     let refresh_code: String
+    let gmail: String
 
     func getUser() -> User {
-        return User(refreshToken: refresh_code, refreshExpiration: refresh_expiration, token: auth_code, userCode: usercode)
+        return User(refreshToken: refresh_code, refreshExpiration: refresh_expiration, token: auth_code, userCode: usercode, gmail: gmail)
     }
 }
 
