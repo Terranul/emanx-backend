@@ -16,7 +16,7 @@ let supabase = SupabaseClient(
 )
 
 struct SupabaseEmail: Codable {
-    let emailId: String
+    let email_id: String
     let subject: String
     let recipient: String
     let sender: String
@@ -29,11 +29,11 @@ struct SupabaseEmail: Codable {
 
 struct SupabaseEmailResponse: Codable {
     let stage: Int
-    let draftId: String
+    let draft_id: String
     let email: SupabaseEmail
 
     func getEmailResponse() -> EmailResponse {
-        return EmailResponse(stage: self.stage, draftId: self.draftId, email: self.email.getEmail())
+        return EmailResponse(stage: self.stage, draftId: self.draft_id, email: self.email.getEmail())
     }
 
 }
@@ -48,6 +48,7 @@ struct SupabaseEmailResponseRequest: Codable {
     let stage: Int
     let draft_id: String
     let email_id: String
+    let usercode: String
 }
 
 
@@ -55,19 +56,19 @@ class EmailModel {
 
     func getEmails(userCode: UserCode) async throws-> [EmailResponse] {
         let supabaseResponses: [SupabaseEmailResponse] = try await supabase   
-                                                            .from("EMAIL_RESPONSE")
+                                                            .from("email_response")
                                                             .select("""
+                                                                    stage,
                                                                     draft_id,
-                                                                    email_id
                                                                     email (
-                                                                        emailid,
+                                                                        email_id,
                                                                         subject,
                                                                         recipient,
                                                                         sender,
                                                                         body
                                                                     )
                                                                     """)
-                                                            .eq("userCode", value: userCode)
+                                                            .eq("usercode", value: userCode)
                                                             .execute()
                                                             .value
         return supabaseResponses.map { cur in
@@ -82,17 +83,17 @@ class EmailModel {
                     .execute()
     }
 
-    func addDraft(emailId: String, draftId: String) async throws {
-        let supabaseResponse = SupabaseEmailResponseRequest(stage: 1, draft_id: draftId, email_id: emailId)
+    func addDraft(emailId: String, draftId: String, userCode: UserCode) async throws {
+        let supabaseResponse = SupabaseEmailResponseRequest(stage: 1, draft_id: draftId, email_id: emailId, usercode: userCode)
         try await supabase
-                    .from("EMAIL_RESPONSE")
+                    .from("email_response")
                     .insert(supabaseResponse)
                     .execute()
     }
 
     func editDraft(emailId: String, newDraftId: String) async throws {
         try await supabase
-                    .from("EMAIL_RESPONSE")
+                    .from("email_response")
                     .update(["draft_id": newDraftId])
                     .eq("email_id", value: emailId)
                     .execute()

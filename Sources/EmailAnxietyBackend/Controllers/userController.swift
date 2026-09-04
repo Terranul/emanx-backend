@@ -28,7 +28,7 @@ struct UserController: RouteCollection {
 }
 
     func boot(routes: any Vapor.RoutesBuilder) throws {
-        routes.put(["users", ":email"], use: register)
+        routes.put(["users", "emails", ":email"], use: register)
         //routes.post("getEmails", user: getEmails)
 
         // used for Pub/Sub only
@@ -41,16 +41,14 @@ struct UserController: RouteCollection {
 
     func register(req: Request) async throws -> Response {
         // TODO add email field to the User struct
-        if (validateRequest(req: req) != nil) {
-            throw Abort(.forbidden)
-        }
         let upload: UserController.RegisterUpload = try req.content.decode(RegisterUpload.self)
         let gmailService = GmailService(accessCode: upload.authToken)
         try await gmailService.registerUser()
         let userService = UserService()
-        let user = User(refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken)
-        let code: UUID = await userService.uploadUser(user: user)
-        return try await ["code" : code.uuidString].encodeResponse(for: req)
+        let code = UUID().uuidString
+        let user = User(refreshToken: upload.refreshToken, refreshExpiration: nil, token: upload.authToken, userCode: code)
+        try await userService.uploadUser(user: user)
+        return try await ["code" : code].encodeResponse(for: req)
     }
 
     // history id from sept2: "historyId": "672329"
@@ -63,7 +61,7 @@ struct UserController: RouteCollection {
         print("passed data encoding")
         let history = try JSONDecoder().decode(UserController.HistoryResponse.self, from: data)
         print("passed history decoding")
-        let gmailService = GmailService(accessCode: try await UserService().getOauthToken(gmail: history.emailAddress))
+        let gmailService = GmailService(accessCode: try await extractAuthToken(req: req))
         print("passed gmail service")
         let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
         print("passed get histroy emails")

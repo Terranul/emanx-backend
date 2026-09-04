@@ -34,17 +34,16 @@ final class UserService: Sendable {
 
     static let TOKEN_EXPIRATION_TIME: Double = 3400 // 3600 is standard, use 3400 to account for processing time
 
-    func uploadUser(user: User) async -> UUID {
-        let uuid = UUID()
+    func uploadUser(user: User) async throws {
+        let notificationModel = NotificationModel()
         if user.refreshExpiration == nil {
             var current = Date()
             current.addTimeInterval(UserService.TOKEN_EXPIRATION_TIME)
-            let newUser = User(refreshToken: user.refreshToken, refreshExpiration: current, token: user.token)
-            await UserInfo.shared.addUser(user: newUser, code: uuid.uuidString)
+            let newUser = User(refreshToken: user.refreshToken, refreshExpiration: current, token: user.token, userCode: user.userCode)
+            try await notificationModel.setUser(user: newUser)
         } else {
-            await UserInfo.shared.addUser(user: user, code: uuid.uuidString)
+            try await notificationModel.setUser(user: user)
         }
-        return uuid
     }
 
     func isRegistered(gmail: String) async -> Bool {
@@ -116,7 +115,7 @@ final class UserService: Sendable {
     }
 
     func createDatabaseDraft(draftId: String, emailId: String, userCode: UserCode) async throws {
-        try await EmailModel().addDraft(emailId: emailId, draftId: draftId)
+        try await EmailModel().addDraft(emailId: emailId, draftId: draftId, userCode: userCode)
     }
 
     func editDatabaseDraft(newDraftId draftId: String, emailId: String) async throws {

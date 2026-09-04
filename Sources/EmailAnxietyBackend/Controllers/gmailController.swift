@@ -13,13 +13,11 @@ struct GmailController: RouteCollection {
     func boot(routes: any Vapor.RoutesBuilder) throws {
         routes.put(["users", ":user", "drafts"], use: writeEmail)
         routes.patch(["users", ":user", "drafts", ":draft"], use: updateEmail)
-        routes.get(["users", ":user", "drafts", ":draft"], use: getDrafts)
+        routes.get(["users", ":user", "drafts"], use: getDrafts)
+        routes.get(["users", ":user", "drafts", ":draft"], use: getDraft)
     }
 
     func writeEmail(req: Request) async throws -> Response {
-        if (validateRequest(req: req) != nil) {
-            throw Abort(.forbidden)
-        }
         let userCode: String = try req.parameters.require("user")
         let gmailCode = try await userService.getOauthToken(code: userCode)
         let gmailService = GmailService(accessCode: gmailCode)
@@ -32,9 +30,6 @@ struct GmailController: RouteCollection {
     }
 
     func updateEmail(req: Request) async throws -> Response {
-        if (validateRequest(req: req) != nil) {
-            throw Abort(.forbidden)
-        }
         let gmailCode = try await extractAuthToken(req: req)
         let emailInfo: EmailRequest = try req.content.decode(EmailRequest.self)
         let id = emailInfo.gmailId
@@ -60,18 +55,23 @@ struct GmailController: RouteCollection {
     }
 
     func getDrafts(req: Request) async throws -> Response {
-        if (validateRequest(req: req) != nil) {
-            throw Abort(.forbidden)
-        }
+        print("testngg")
         let userCode = try req.parameters.require("user")
         let drafts = try await userService.getEmails(userCode: userCode)
+        print("passed drafts")
         let response = DraftsResponse(drafts: drafts)
+        print("passed response")
         return try await response.encodeResponse(for: req)
     }
 
-    // func getDraft(req: Request) async throws -> Response {
-
-    // }
+    func getDraft(req: Request) async throws -> Response {
+        print("testing")
+        let draftId = try req.parameters.require("draft")
+        let authToken = try await extractAuthToken(req: req)
+        let gmailService  = GmailService(accessCode: authToken)
+        let email = try await gmailService.getDraft(code: draftId)
+        return try await email.encodeResponse(for: req)
+    }
 
     // func getEmail(req: Request) async throws -> Response {
     //     if (validateRequest(req: req) != nil) {

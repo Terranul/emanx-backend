@@ -8,6 +8,7 @@ import Foundation
 import FoundationNetworking
 #endif
 import WebPush
+import Supabase
 
 typealias Gmail = String
 typealias UserCode = String
@@ -17,6 +18,44 @@ struct User {
     let refreshToken: String
     let refreshExpiration: Date?
     let token: String
+    let userCode: UserCode
+
+    func supabaseConvert() -> UserSupabase {
+        return UserSupabase(usercode: userCode, refreshexpiration: refreshExpiration!, authcode: token, refreshcode: refreshToken)
+    }
+}
+
+struct UserSupabase: Codable {
+    let usercode: String
+    let refreshexpiration: Date
+    let authcode: String
+    let refreshcode: String
+
+    func getUser() -> User {
+        return User(refreshToken: refreshcode, refreshExpiration: refreshexpiration, token: authcode, userCode: usercode)
+    }
+}
+
+class NotificationModel {
+
+    func getUser(userCode: UserCode) async throws -> User {
+        let supaUser: UserSupabase = try await supabase 
+                                        .from("app_user")
+                                        .select()
+                                        .eq("usercode", value: userCode)
+                                        .single()
+                                        .execute()
+                                        .value
+        return supaUser.getUser()
+    }
+
+    func setUser(user: User) async throws {
+        let supaUser: UserSupabase = user.supabaseConvert()
+        try await supabase
+                .from("app_user")
+                .insert(supaUser)
+                .execute()      
+    }
 }
 
 actor UserInfo {
