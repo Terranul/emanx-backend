@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-signin-client_id" content="902542881032-o3dv7vu8ksd8sub5cjrloknjs6rmbcpa.apps.googleusercontent.com">
     <title>My First PWA</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#317EFB">
 </head>
 <body>
     <h1>Emanx PWA</h1>
+    <div class="g-signin2" data-onsuccess="onSignIn">Sign in to Gmail</div>
     <button id="register-button">Register</button>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <script src="index.mjs"></script>
 </body>
 </html>

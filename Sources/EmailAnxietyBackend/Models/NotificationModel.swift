@@ -21,18 +21,18 @@ struct User {
     let userCode: UserCode
 
     func supabaseConvert() -> UserSupabase {
-        return UserSupabase(usercode: userCode, refreshexpiration: refreshExpiration!, authcode: token, refreshcode: refreshToken)
+        return UserSupabase(usercode: userCode, refresh_expiration: refreshExpiration!, auth_code: token, refresh_code: refreshToken)
     }
 }
 
 struct UserSupabase: Codable {
     let usercode: String
-    let refreshexpiration: Date
-    let authcode: String
-    let refreshcode: String
+    let refresh_expiration: Date
+    let auth_code: String
+    let refresh_code: String
 
     func getUser() -> User {
-        return User(refreshToken: refreshcode, refreshExpiration: refreshexpiration, token: authcode, userCode: usercode)
+        return User(refreshToken: refresh_code, refreshExpiration: refresh_expiration, token: auth_code, userCode: usercode)
     }
 }
 
@@ -65,15 +65,6 @@ actor UserInfo {
 
     static var shared: UserInfo {
         return userInfo
-    }
-
-    func addUser(user: User, code: UserCode) {
-        print("user added to db")
-        users[code] = user
-    }
-
-    func getUser(code: UserCode) -> User? {
-        return self.users[code]
     }
 
     func addSubscription(subscription: Subscriber, gmail: Gmail) {

@@ -46,20 +46,12 @@ final class UserService: Sendable {
         }
     }
 
-    func isRegistered(gmail: String) async -> Bool {
-        return await UserInfo.shared.users.keys.contains(gmail)
-    }
-
     func getOauthToken(code: UserCode) async throws -> String {
-        if let user = await UserInfo.shared.getUser(code: code) {
-            if (Date() > user.refreshExpiration!) {
+        let user = try await NotificationModel().getUser(userCode: code) 
+        if (Date() > user.refreshExpiration!) {
                 return try await fetchAuthToken(refreshToken: user.refreshToken)
             } else {
                 return user.token
-            }
-        } else {
-            // throw here
-            return ""
         }
     }
 
