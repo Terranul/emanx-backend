@@ -36,7 +36,7 @@ struct UserController: RouteCollection {
 
         // used for PWA only
         routes.get("vapidKey", use: getVapidKey)
-        routes.post("subscribe", use: subscribe)
+        routes.put(["subscribe", ":email"], use: subscribe)
     }
 
     func register(req: Request) async throws -> Response {
@@ -75,9 +75,12 @@ struct UserController: RouteCollection {
     }
 
     func subscribe(req: Request) async throws -> Response {
-        let subscription = try req.content.decode(Subscriber.self, as: .jsonAPI)
-        let gmailCode = try await extractAuthToken(req: req)
-        await self.userService.uploadSubscription(subscription: subscription, gmail: gmailCode)
+        print("entered")
+        let subscription = try req.content.decode(Subscriber.self)
+        print(subscription.vapidKeyID)
+        print("finished")
+        let gmail = try req.parameters.require("email")
+        try await self.userService.uploadSubscription(subscription: subscription, gmail: gmail)
         return Response(status: .ok)
     }
 

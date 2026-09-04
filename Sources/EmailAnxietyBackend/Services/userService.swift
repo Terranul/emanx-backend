@@ -75,18 +75,16 @@ final class UserService: Sendable {
         return response.access_token
     }
 
-    func uploadSubscription(subscription: Subscriber, gmail: String) async {
-        await UserInfo.shared.addSubscription(subscription: subscription, gmail: gmail)
+    func uploadSubscription(subscription: Subscriber, gmail: String) async throws {
+        try await NotificationModel().setSubscriber(email: gmail, subscriber: subscription)
     }
 
-    func getSubscription(gmail: String) async -> Subscriber? {
-        return await UserInfo.shared.getSubscription(gmail: gmail)
+    func getSubscription(gmail: String) async throws -> Subscriber {
+        return try await NotificationModel().getSubscriber(email: gmail)
     }
 
     func sendNotification(body: Data, gmail: String) async throws {
-        guard let subscription: Subscriber = await self.getSubscription(gmail: gmail) else {
-            throw NotificationError.UndefinedUser
-        }
+        let subscription: Subscriber = try await self.getSubscription(gmail: gmail)
         print("in send notification")
         try await self.pushManager.send(
             notification: PushMessage.Notification(

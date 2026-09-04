@@ -2,11 +2,13 @@ document.getElementById("register-button").addEventListener("click", registerSub
 
 let worker;
 let subscription;
+let curVapidKey;
 
 async function initialize() {
     worker = await navigator.serviceWorker.register("sv.mjs", {
         type: "module"
     });
+    await createNewSubscription()
 
     subscription = await worker.pushManager.getSubscription();
 }
@@ -14,10 +16,12 @@ async function initialize() {
 async function createNewSubscription() {
     try {
         if (subscription == null) {
+            curVapidKey = await getVapidPublicKey()
+            console.log("curVapidKey" + curVapidKey)
             subscription = await worker.pushManager.subscribe({
-                applicationServerKey: await getVapidPublicKey(),
+                applicationServerKey: curVapidKey,
                 userVisibleOnly: true
-            });
+            }); 
         }
     } catch (error) {
         console.error(error);
@@ -37,16 +41,17 @@ async function getVapidPublicKey() {
 
 async function registerSubscription() {
     await createNewSubscription();
-    console.log(subscription.options.applicationServerKey)
-    const subscriptionStatusResponse = await fetch("/v1/subscribe", {
-        method: "POST",
+    console.log(subscription.toJSON())
+    console.log("Server key:" + subscription.options.applicationServerKey)
+    console.log(curVapidKey)
+    const subscriptionStatusResponse = await fetch("/v1/subscribe/testing", {
+        method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            "gmail": "Testing"
         },
         body: JSON.stringify({
             ...subscription.toJSON(),
-            applicationServerKey: ""
+            applicationServerKey: curVapidKey
         })
     });
 }

@@ -9,6 +9,7 @@ import FoundationNetworking
 #endif
 import WebPush
 import Supabase
+import Crypto
 
 typealias Gmail = String
 typealias UserCode = String
@@ -36,6 +37,33 @@ struct UserSupabase: Codable {
     }
 }
 
+struct SubscriberSupabase: Codable {
+    let endpoint: String
+    let public_key: String
+    let auth_key: String
+    let vapid_key: String
+
+    func getSubscriber() throws -> Subscriber {
+        let urlEndpoint = URL(string: self.endpoint)!
+        let publicKey = try P256.KeyAgreement.PublicKey(pemRepresentation: self.public_key)
+        let authKey = Data(base64Encoded: self.auth_key)!
+        let keyMaterial = UserAgentKeyMaterial(publicKey: publicKey, authenticationSecret: authKey)
+        let vapidKey = try VAPID.Key(base64URLEncoded: self.vapid_key).id
+        return Subscriber(endpoint: urlEndpoint, userAgentKeyMaterial: keyMaterial, vapidKeyID: vapidKey)
+    }
+}
+
+extension Subscriber {
+
+    func getSupabaseSubscriber() -> SubscriberSupabase {
+        let endpoint = self.endpoint.absoluteString
+        let publicKey = self.userAgentKeyMaterial.publicKey.pemRepresentation
+        let authKey = self.userAgentKeyMaterial.authenticationSecret.base64EncodedString()
+        let vapidKey = self.vapidKeyID.description
+        return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey)
+    }
+}
+
 class NotificationModel {
 
     func getUser(userCode: UserCode) async throws -> User {
@@ -56,22 +84,22 @@ class NotificationModel {
                 .insert(supaUser)
                 .execute()      
     }
-}
 
-actor UserInfo {
-    private static let userInfo: UserInfo = UserInfo()
-    var users: [UserCode: User] = [:]
-    var subscriptions: [Gmail: Subscriber] = [:]
-
-    static var shared: UserInfo {
-        return userInfo
+    func getSubscriber(email: Gmail) async throws -> Subscriber {
+        let supaSubscriber: SubscriberSupabase = try await supabase
+                                                    .from("subscriber")
+                                                    .select("endpoint, public_key, auth_key, vapid_key")
+                                                    .single()
+                                                    .execute()
+                                                    .value
+        return try supaSubscriber.getSubscriber()
     }
 
-    func addSubscription(subscription: Subscriber, gmail: Gmail) {
-        subscriptions[gmail] = subscription
-    }
-
-    func getSubscription(gmail: Gmail) -> Subscriber? {
-        return self.subscriptions[gmail]
+    func setSubscriber(email: Gmail, subscriber: Subscriber) async throws {
+        let supaSubscriber = subscriber.getSupabaseSubscriber()
+        try await supabase
+                .from("subscriber")
+                .insert(supaSubscriber)
+                .execute()
     }
 }
