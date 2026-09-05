@@ -47,11 +47,20 @@ final class UserService: Sendable {
     }
 
     func getOauthToken(code: UserCode) async throws -> String {
-        let user = try await NotificationModel().getUser(userCode: code) 
-        if (Date() > user.refreshExpiration!) {
-                return try await fetchAuthToken(refreshToken: user.refreshToken)
-            } else {
-                return user.token
+        let user = try await NotificationModel().getUser(userCode: code)
+        return try await getValidOauthToken(user: user)
+    }
+
+    func getOauthToken(gmail: Gmail) async throws -> String {
+        let user = try await NotificationModel().getUser(gmail: gmail)
+        return try await getValidOauthToken(user: user)
+    }
+
+    private func getValidOauthToken(user: User) async throws -> String {
+        if Date() > user.refreshExpiration! {
+            return try await fetchAuthToken(refreshToken: user.refreshToken)
+        } else {
+            return user.token
         }
     }
 
@@ -83,8 +92,7 @@ final class UserService: Sendable {
         return try await NotificationModel().getSubscriber(email: gmail)
     }
 
-    func sendNotification(body: Data, gmail: String) async throws {
-        let subscription: Subscriber = try await self.getSubscription(gmail: gmail)
+    func sendNotification(body: Data, subscription: Subscriber) async throws {
         print("in send notification")
         try await self.pushManager.send(
             notification: PushMessage.Notification(

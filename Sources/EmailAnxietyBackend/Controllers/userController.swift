@@ -36,7 +36,7 @@ struct UserController: RouteCollection {
         //routes.post("getEmails", user: getEmails)
 
         // used for Pub/Sub only
-        routes.post(["users", ":user"], use: notify)
+        routes.post(["users"], use: notify)
 
         // used for PWA only
         routes.get("vapidKey", use: getVapidKey)
@@ -66,12 +66,13 @@ struct UserController: RouteCollection {
         print("passed data encoding")
         let history = try JSONDecoder().decode(UserController.HistoryResponse.self, from: data)
         print("passed history decoding")
-        let gmailService = GmailService(accessCode: try await extractAuthToken(req: req))
+        let subscriber = try await userService.getSubscription(gmail: history.emailAddress)
+        let gmailService = GmailService(accessCode: try await userService.getOauthToken(gmail: history.emailAddress))
         print("passed gmail service")
         let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
         let emailResponses = try await self.userService.addEmails(emails: newEmails)
         let notifyResponse = NotifyResponse(senderEmails: emailResponses)
-        try await userService.sendNotification(body: try JSONEncoder().encode(notifyResponse), gmail: history.emailAddress)
+        try await userService.sendNotification(body: try JSONEncoder().encode(notifyResponse), subscription: subscriber)
         print("passed send notficiation")
         return Response(status: .ok)
     }

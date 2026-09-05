@@ -1,4 +1,20 @@
-document.getElementById("register-button").addEventListener("click", registerSubscription);
+//document.getElementById("register-button").addEventListener("click", registerSubscription);
+
+window.onload = function () {
+
+    google.accounts.id.initialize({
+        client_id: "902542881032-o3dv7vu8ksd8sub5cjrloknjs6rmbcpa.apps.googleusercontent.com",
+        callback: handleGoogleLogin
+    });
+
+    google.accounts.id.renderButton(
+        document.getElementById("google-signin-button"),
+        {
+            theme: "outline",
+            size: "large"
+        }
+    );
+};
 
 let worker;
 let subscription;
@@ -39,12 +55,12 @@ async function getVapidPublicKey() {
     return json.vapid;
 }
 
-async function registerSubscription() {
+async function registerSubscription(email) {
     await createNewSubscription();
     console.log(subscription.toJSON())
     console.log("Server key:" + subscription.options.applicationServerKey)
     console.log(curVapidKey)
-    const subscriptionStatusResponse = await fetch("/v1/subscribe/testing", {
+    const subscriptionStatusResponse = await fetch(`/v1/subscribe/${email}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -56,12 +72,18 @@ async function registerSubscription() {
     });
 }
 
-function onSignIn(googleUser) {
-  var profile = googleUser.getBasicProfile();
-  console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-  console.log('Name: ' + profile.getName());
-  console.log('Image URL: ' + profile.getImageUrl());
-  console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+async function handleGoogleLogin(response) {
+    const credential = response.credential;
+    const payload = credential.split(".")[1];
+    const decoded = JSON.parse(
+        atob(
+            payload
+                .replace(/-/g, "+")
+                .replace(/_/g, "/"))
+    );
+    let email = decoded.email
+    console.log(email)
+    await registerSubscription(email)
 }
 
 initialize();

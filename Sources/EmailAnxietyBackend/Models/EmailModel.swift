@@ -12,7 +12,12 @@ import Vapor
 
 let supabase = SupabaseClient(
     supabaseURL: URL(string: Environment.get("SUPABASE_URL")!)!,
-    supabaseKey: Environment.get("SUPABASE_KEY")!
+    supabaseKey: Environment.get("SUPABASE_KEY")!,
+    options: .init(
+        global: .init(
+            session: URLSession.shared
+        )
+    )
 )
 
 struct SupabaseEmail: Codable {

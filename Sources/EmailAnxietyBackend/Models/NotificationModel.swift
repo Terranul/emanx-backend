@@ -44,6 +44,7 @@ struct SubscriberSupabase: Codable {
     let public_key: String
     let auth_key: String
     let vapid_key: String
+    let gmail: String
 
     func getSubscriber() throws -> Subscriber {
         let urlEndpoint = URL(string: self.endpoint)!
@@ -57,12 +58,12 @@ struct SubscriberSupabase: Codable {
 
 extension Subscriber {
 
-    func getSupabaseSubscriber() -> SubscriberSupabase {
+    func getSupabaseSubscriber(gmail: String) -> SubscriberSupabase {
         let endpoint = self.endpoint.absoluteString
         let publicKey = self.userAgentKeyMaterial.publicKey.pemRepresentation
         let authKey = self.userAgentKeyMaterial.authenticationSecret.base64EncodedString()
         let vapidKey = self.vapidKeyID.description
-        return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey)
+        return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey, gmail: gmail)
     }
 }
 
@@ -73,6 +74,17 @@ class NotificationModel {
                                         .from("app_user")
                                         .select()
                                         .eq("usercode", value: userCode)
+                                        .single()
+                                        .execute()
+                                        .value
+        return supaUser.getUser()
+    }
+
+    func getUser(gmail: Gmail) async throws -> User {
+        let supaUser: UserSupabase = try await supabase 
+                                        .from("app_user")
+                                        .select()
+                                        .eq("gmail", value: gmail)
                                         .single()
                                         .execute()
                                         .value
@@ -90,7 +102,8 @@ class NotificationModel {
     func getSubscriber(email: Gmail) async throws -> Subscriber {
         let supaSubscriber: SubscriberSupabase = try await supabase
                                                     .from("subscriber")
-                                                    .select("endpoint, public_key, auth_key, vapid_key")
+                                                    .select()
+                                                    .eq("gmail", value: email)
                                                     .single()
                                                     .execute()
                                                     .value
@@ -98,7 +111,7 @@ class NotificationModel {
     }
 
     func setSubscriber(email: Gmail, subscriber: Subscriber) async throws {
-        let supaSubscriber = subscriber.getSupabaseSubscriber()
+        let supaSubscriber = subscriber.getSupabaseSubscriber(gmail: email)
         try await supabase
                 .from("subscriber")
                 .insert(supaSubscriber)
