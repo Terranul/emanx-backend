@@ -5,15 +5,33 @@ pid is sent in the notification context
 the pid value is supplied for all create/update operations as well as getting drafts
 
 */
-
-import Supabase
 import Foundation
+#if canImport(FoundationNetworking) // for render since it runs on linux. This is stupid honestly
+import FoundationNetworking
+#endif
+import Supabase
 import Vapor
+
+// linux needs a auth storage when creating the client, but we don't use this at all
+final class UselessAuthStorage: AuthLocalStorage {
+    func store(key: String, value: Data) throws {
+        return
+    }
+    func retrieve(key: String) throws -> Data? {
+        return nil
+    }
+    func remove(key: String) throws {
+        return
+    }
+}
 
 let supabase = SupabaseClient(
     supabaseURL: URL(string: Environment.get("SUPABASE_URL")!)!,
     supabaseKey: Environment.get("SUPABASE_KEY")!,
     options: .init(
+        auth: .init(
+            storage: UselessAuthStorage()
+        ),
         global: .init(
             session: URLSession.shared
         )
