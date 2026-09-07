@@ -70,13 +70,13 @@ struct EmailResponse: Codable {
     }
 
     let stage: Int
-    let draftId: String
+    let draftId: String?
     let email: SenderEmail
 }
 
 struct SupabaseEmailResponseRequest: Codable {
     let stage: Int
-    let draft_id: String
+    let draft_id: String?
     let email_id: String
     let usercode: String
 }
@@ -112,7 +112,7 @@ class EmailModel {
                     .execute()
     }
 
-    func addDraft(emailId: String, draftId: String, userCode: UserCode) async throws {
+    func addDraft(emailId: String, draftId: String?, userCode: UserCode) async throws {
         let supabaseResponse = SupabaseEmailResponseRequest(stage: 1, draft_id: draftId, email_id: emailId, usercode: userCode)
         try await supabase
                     .from("email_response")

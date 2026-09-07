@@ -91,6 +91,15 @@ final class UserService: Sendable {
         return response.access_token
     }
 
+    // Note: This function will update the token if expired, but not the token expiration
+    // This method is only to be used for relating the gmail to a usercode and token
+    func getUser(gmail: Gmail) async throws -> User {
+        var user = try await NotificationModel().getUser(gmail: gmail)
+        let validToken = try await self.getValidOauthToken(user: user)
+        user.token = validToken
+        return user
+    }
+
     func uploadSubscription(subscription: Subscriber, gmail: String) async throws {
         try await NotificationModel().setSubscriber(email: gmail, subscriber: subscription)
     }
@@ -119,7 +128,7 @@ final class UserService: Sendable {
         return try await EmailModel().getEmails(userCode: userCode)
     }
 
-    func createDatabaseDraft(draftId: String, emailId: String, userCode: UserCode) async throws {
+    func createDatabaseDraft(draftId: String?, emailId: String, userCode: UserCode) async throws {
         try await EmailModel().addDraft(emailId: emailId, draftId: draftId, userCode: userCode)
     }
 
@@ -127,18 +136,20 @@ final class UserService: Sendable {
         try await EmailModel().editDraft(emailId: emailId, newDraftId: draftId)
     }
 
-    func addEmail(email: Email) async throws -> String {
+    // creates both an email entry and an email response 
+    func addEmail(email: Email, userCode: UserCode) async throws -> String { 
         let emailId = UUID().uuidString
         let supabaseEmail = SupabaseEmail(email_id: emailId, subject: email.subject, recipient: email.to, sender: email.from, body: email.body)
         try await EmailModel().addEmail(email: supabaseEmail)
+        try await self.createDatabaseDraft(draftId: nil, emailId: emailId, userCode: userCode)
         return emailId
     }
 
-    func addEmails(emails: [Email]) async throws -> [EmailResponse.SenderEmail] {
+    func addEmails(emails: [Email], userCode: UserCode) async throws -> [EmailResponse.SenderEmail] {
          return try await withThrowingTaskGroup { body in
             for email in emails {
                 body.addTask {
-                    let emailId = try await self.addEmail(email: email)
+                    let emailId = try await self.addEmail(email: email, userCode: userCode)
                     return EmailResponse.SenderEmail(emailId: emailId, body: email)
                 }
             }

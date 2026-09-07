@@ -50,7 +50,8 @@ struct SubscriberSupabase: Codable {
         let urlEndpoint = URL(string: self.endpoint)!
         print("db output:" + self.public_key)
         print(String(reflecting: self.public_key))
-        let publicKey = try P256.KeyAgreement.PublicKey(pemRepresentation: self.public_key.trimmingCharacters(in: .whitespacesAndNewlines))
+        let pem = try P256.Signing.PublicKey.init(pemRepresentation: self.public_key)
+        let publicKey = try P256.KeyAgreement.PublicKey(x963Representation: pem.x963Representation)
         let authKey = Data(base64Encoded: self.auth_key)!
         let keyMaterial = UserAgentKeyMaterial(publicKey: publicKey, authenticationSecret: authKey)
         let vapidKey = try VAPID.Key(base64URLEncoded: self.vapid_key).id
