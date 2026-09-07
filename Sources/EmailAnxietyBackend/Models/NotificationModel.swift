@@ -50,8 +50,8 @@ struct SubscriberSupabase: Codable {
         let urlEndpoint = URL(string: self.endpoint)!
         print("db output:" + self.public_key)
         print(String(reflecting: self.public_key))
-        let pem = try P256.Signing.PublicKey.init(pemRepresentation: self.public_key)
-        let publicKey = try P256.KeyAgreement.PublicKey(x963Representation: pem.x963Representation)
+        let publicKeyRaw = Data(base64Encoded: self.public_key)
+        let publicKey = try P256.KeyAgreement.PublicKey.init(rawRepresentation: publicKeyRaw!)
         let authKey = Data(base64Encoded: self.auth_key)!
         let keyMaterial = UserAgentKeyMaterial(publicKey: publicKey, authenticationSecret: authKey)
         let vapidKey = try VAPID.Key(base64URLEncoded: self.vapid_key).id
@@ -63,7 +63,8 @@ extension Subscriber {
 
     func getSupabaseSubscriber(gmail: String) -> SubscriberSupabase {
         let endpoint = self.endpoint.absoluteString
-        let publicKey: String = self.userAgentKeyMaterial.publicKey.pemRepresentation
+        let rawPublicKey = self.userAgentKeyMaterial.publicKey.rawRepresentation
+        let publicKey = rawPublicKey.base64EncodedString()
         let authKey = self.userAgentKeyMaterial.authenticationSecret.base64EncodedString()
         let vapidKey = self.vapidKeyID.description
         return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey, gmail: gmail)
