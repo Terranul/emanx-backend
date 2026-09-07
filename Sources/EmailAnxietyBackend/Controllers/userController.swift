@@ -67,6 +67,7 @@ struct UserController: RouteCollection {
         let history = try JSONDecoder().decode(UserController.HistoryResponse.self, from: data)
         print("passed history decoding")
         let subscriber = try await userService.getSubscription(gmail: history.emailAddress)
+        print("passed subscriber")
         let gmailService = GmailService(accessCode: try await userService.getOauthToken(gmail: history.emailAddress))
         print("passed gmail service")
         let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
