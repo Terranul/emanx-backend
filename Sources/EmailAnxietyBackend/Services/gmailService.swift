@@ -115,7 +115,7 @@ final class GmailService: Sendable {
         print("result:" + String(data: data, encoding: .utf8)!)
     }
 
-    func getHistoryEmails(historyId: String) async throws -> [Email] {
+    func getHistoryEmails(historyId: Int) async throws -> [Email] {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=\(historyId)")
         request.httpMethod = "GET"
         let (data, _) = try await URLSession.shared.data(for: request)

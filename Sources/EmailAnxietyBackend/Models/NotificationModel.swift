@@ -17,8 +17,8 @@ typealias UserCode = String
 
 struct User {
     let refreshToken: String
-    let refreshExpiration: Date?
-    let token: String
+    var refreshExpiration: Date?
+    var token: String
     let userCode: UserCode
     let gmail: String
 
@@ -89,6 +89,22 @@ class NotificationModel {
                                         .execute()
                                         .value
         return supaUser.getUser()
+    }
+
+    func setTokenExpiration(userCode: UserCode, to date: Date) async throws {
+        try await supabase
+                    .from("app_user")
+                    .update(["refresh_expiration": date])
+                    .eq("usercode", value: userCode)
+                    .execute()        
+    }
+
+    func updateUser(to user: User) async throws {
+        let supaUser: UserSupabase = user.supabaseConvert()
+        try await supabase
+                .from("app_user")
+                .update(supaUser)
+                .execute()   
     }
 
     func setUser(user: User) async throws {

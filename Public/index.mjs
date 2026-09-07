@@ -21,9 +21,10 @@ let subscription;
 let curVapidKey;
 
 async function initialize() {
-    worker = await navigator.serviceWorker.register("sv.mjs", {
+    worker = await navigator.serviceWorker.register("/sv.mjs", {
         type: "module"
     });
+    console.log(worker)
     await createNewSubscription()
 
     subscription = await worker.pushManager.getSubscription();

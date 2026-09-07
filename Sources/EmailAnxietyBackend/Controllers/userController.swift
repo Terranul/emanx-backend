@@ -19,7 +19,7 @@ struct UserController: RouteCollection {
 
     struct HistoryResponse: Decodable {
         let emailAddress: String
-        let historyId: String
+        let historyId: Int
     }
 
     struct NotifyResponse: Content {

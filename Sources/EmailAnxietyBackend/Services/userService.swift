@@ -58,7 +58,14 @@ final class UserService: Sendable {
 
     private func getValidOauthToken(user: User) async throws -> String {
         if Date() > user.refreshExpiration! {
-            return try await fetchAuthToken(refreshToken: user.refreshToken)
+            var updatedUser = user
+            var current = Date()
+            current.addTimeInterval(UserService.TOKEN_EXPIRATION_TIME)
+            let newAuthToken = try await fetchAuthToken(refreshToken: user.refreshToken)
+            updatedUser.token = newAuthToken
+            updatedUser.refreshExpiration = current
+            try await NotificationModel().updateUser(to: updatedUser)
+            return newAuthToken
         } else {
             return user.token
         }
