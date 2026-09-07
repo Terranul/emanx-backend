@@ -60,7 +60,11 @@ struct SubscriberSupabase: Codable {
     // assume the publicKey value is a base64 encoded string of a pem file
     private func getPublicKey(publicKey: String) throws -> P256.KeyAgreement.PublicKey {
         let base64 = Data(base64Encoded: publicKey)!
+        print("before count" +  String(base64.count))
+        print(print(Array(base64)))
         let pemData = base64.suffix(65)
+        print("after count" + String(pemData.count))
+        print(print(Array(pemData)))
         return try P256.KeyAgreement.PublicKey.init(rawRepresentation: pemData)
     }
 }
