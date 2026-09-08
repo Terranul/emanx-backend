@@ -15,6 +15,23 @@ import Vapor
 typealias Gmail = String
 typealias UserCode = String
 
+extension Data {
+    func base64URLEncodedString() -> String {
+        base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    init?(base64URLEncoded string: String) {
+        var base64 = string
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64 += "=" }
+        self.init(base64Encoded: base64)
+    }
+}
+
 
 struct User {
     let refreshToken: String
@@ -47,25 +64,16 @@ struct SubscriberSupabase: Codable {
     let vapid_key: String
     let gmail: String
 
+    // https://stackoverflow.com/questions/63076554/problem-using-p256-signing-publickey-on-ios
+    // assume the publicKey value is a base64 encoded string of a pem file
+    // the reason this failed is becuase we escape some characters
     func getSubscriber() throws -> Subscriber {
         let urlEndpoint = URL(string: self.endpoint)!
-        let publicKey = try self.getPublicKey(publicKey: self.public_key)
-        let authKey = Data(base64Encoded: self.auth_key)!
+        let publicKey = try P256.KeyAgreement.PublicKey(x963Representation: Data(base64URLEncoded: self.public_key)!)
+        let authKey = Data(base64URLEncoded: self.auth_key)!
         let keyMaterial = UserAgentKeyMaterial(publicKey: publicKey, authenticationSecret: authKey)
         let vapidKey = try VAPID.Key(base64URLEncoded: self.vapid_key).id
         return Subscriber(endpoint: urlEndpoint, userAgentKeyMaterial: keyMaterial, vapidKeyID: vapidKey)
-    }
-
-    // https://stackoverflow.com/questions/63076554/problem-using-p256-signing-publickey-on-ios
-    // assume the publicKey value is a base64 encoded string of a pem file
-    private func getPublicKey(publicKey: String) throws -> P256.KeyAgreement.PublicKey {
-        let base64 = Data(base64Encoded: publicKey)!
-        print("before count" +  String(base64.count))
-        print(print(Array(base64)))
-        let pemData = base64.suffix(65)
-        print("after count" + String(pemData.count))
-        print(print(Array(pemData)))
-        return try P256.KeyAgreement.PublicKey.init(rawRepresentation: pemData)
     }
 }
 
@@ -73,8 +81,8 @@ extension Subscriber {
 
     func getSupabaseSubscriber(gmail: String) -> SubscriberSupabase {
         let endpoint = self.endpoint.absoluteString
-        let publicKey: String = self.userAgentKeyMaterial.publicKey.pemRepresentation.base64String()
-        let authKey = self.userAgentKeyMaterial.authenticationSecret.base64EncodedString()
+        let publicKey: String = self.userAgentKeyMaterial.publicKey.x963Representation.base64URLEncodedString()
+        let authKey = self.userAgentKeyMaterial.authenticationSecret.base64URLEncodedString()
         let vapidKey = self.vapidKeyID.description
         return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey, gmail: gmail)
     }
