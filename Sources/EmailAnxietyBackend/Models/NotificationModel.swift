@@ -69,7 +69,11 @@ struct SubscriberSupabase: Codable {
     // the reason this failed is becuase we escape some characters
     func getSubscriber() throws -> Subscriber {
         let urlEndpoint = URL(string: self.endpoint)!
+        print("after base64url encoded string: " + public_key)
+        print(Array(Data(base64URLEncoded: self.public_key)!))
+        print("above is bytes")
         let publicKey = try P256.KeyAgreement.PublicKey(x963Representation: Data(base64URLEncoded: self.public_key)!)
+        print("passed problem area")
         let authKey = Data(base64URLEncoded: self.auth_key)!
         let keyMaterial = UserAgentKeyMaterial(publicKey: publicKey, authenticationSecret: authKey)
         let vapidKey = try VAPID.Key(base64URLEncoded: self.vapid_key).id
@@ -82,6 +86,9 @@ extension Subscriber {
     func getSupabaseSubscriber(gmail: String) -> SubscriberSupabase {
         let endpoint = self.endpoint.absoluteString
         let publicKey: String = self.userAgentKeyMaterial.publicKey.x963Representation.base64URLEncodedString()
+        print("before bytes")
+        print(Array(self.userAgentKeyMaterial.publicKey.x963Representation))
+        print("before base64urlencoded string" + self.userAgentKeyMaterial.publicKey.x963Representation.base64URLEncodedString())
         let authKey = self.userAgentKeyMaterial.authenticationSecret.base64URLEncodedString()
         let vapidKey = self.vapidKeyID.description
         return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey, gmail: gmail)
