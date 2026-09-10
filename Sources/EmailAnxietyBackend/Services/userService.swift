@@ -32,7 +32,7 @@ final class UserService: Sendable {
         self.pushManager = WebPushManager(vapidConfiguration: vapidConfiguration)
     }
 
-    static let TOKEN_EXPIRATION_TIME: Double = 3400 // 3600 is standard, use 3400 to account for processing time
+    static let TOKEN_EXPIRATION_TIME: Double = 3200 // 3600 is standard, use 3200 to account for processing time
 
     func uploadUser(user: User) async throws {
         let notificationModel = NotificationModel()
@@ -75,19 +75,20 @@ final class UserService: Sendable {
         var request = URLRequest(
             url: URL(string: "https://oauth2.googleapis.com/token")!
         )
+        var urlQuery = URLComponents()
+        urlQuery.queryItems = [
+            URLQueryItem(name: "client_id", value: "902542881032-oqjda56jk9584ejcba4gmqjn5dul7ogp.apps.googleusercontent.com"),
+            URLQueryItem(name: "refresh_token", value: refreshToken),
+            URLQueryItem(name: "grant_type", value: "refresh_token")
+        ]
         request.httpMethod = "POST"
         request.setValue(
             "application/x-www-form-urlencoded",
             forHTTPHeaderField: "Content-Type"
         )
-        let body = [
-            "client_id": "902542881032-oqjda56jk9584ejcba4gmqjn5dul7ogp.apps.googleusercontent.com",
-            "refresh_token": refreshToken,
-            "grant_type": "refresh_token",
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let response = try JSONDecoder().decode(TokenResponse.self, from: data)
+        request.httpBody = urlQuery.percentEncodedPath.data(using: .utf8)
+        let (dataR, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(TokenResponse.self, from: dataR)
         return response.access_token
     }
 
