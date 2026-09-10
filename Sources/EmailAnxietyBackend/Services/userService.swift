@@ -86,7 +86,8 @@ final class UserService: Sendable {
             "application/x-www-form-urlencoded",
             forHTTPHeaderField: "Content-Type"
         )
-        request.httpBody = urlQuery.percentEncodedPath.data(using: .utf8)
+        request.httpBody = urlQuery.percentEncodedQuery?.data(using: .utf8)
+        print("url encoded data: " + urlQuery.percentEncodedQuery!)
         let (dataR, _) = try await URLSession.shared.data(for: request)
         let response = try JSONDecoder().decode(TokenResponse.self, from: dataR)
         return response.access_token
