@@ -58,42 +58,18 @@ struct UserSupabase: Codable {
 }
 
 struct SubscriberSupabase: Codable {
-    let endpoint: String
-    let public_key: String
-    let auth_key: String
-    let vapid_key: String
     let gmail: String
+    let data: String
 
-    // https://stackoverflow.com/questions/63076554/problem-using-p256-signing-publickey-on-ios
-    // assume the publicKey value is a base64 encoded string of a pem file
-    // the reason this failed is becuase we escape some characters
     func getSubscriber() throws -> Subscriber {
-        let urlEndpoint = URL(string: self.endpoint)!
-        print("after base64url encoded string: " + public_key)
-        print(Array(Data(base64URLEncoded: self.public_key)!))
-        print("above is bytes")
-        let publicKey = try P256.KeyAgreement.PublicKey(x963Representation: Data(base64URLEncoded: self.public_key)!)
-        print("passed problem area")
-        let authKey = Data(base64URLEncoded: self.auth_key)!
-        let keyMaterial = UserAgentKeyMaterial(publicKey: publicKey, authenticationSecret: authKey)
-        let vapidKey = try VAPID.Key(base64URLEncoded: self.vapid_key).id
-        return Subscriber(endpoint: urlEndpoint, userAgentKeyMaterial: keyMaterial, vapidKeyID: vapidKey)
+        print("passed get subscriber")
+        let jsonData = Data(base64URLEncoded: self.data)!
+        print("pased json data")
+        return try JSONDecoder().decode(Subscriber.self, from: jsonData)
+        print("end get subscriber")
     }
 }
 
-extension Subscriber {
-
-    func getSupabaseSubscriber(gmail: String) -> SubscriberSupabase {
-        let endpoint = self.endpoint.absoluteString
-        let publicKey: String = self.userAgentKeyMaterial.publicKey.x963Representation.base64URLEncodedString()
-        print("before bytes")
-        print(Array(self.userAgentKeyMaterial.publicKey.x963Representation))
-        print("before base64urlencoded string" + self.userAgentKeyMaterial.publicKey.x963Representation.base64URLEncodedString())
-        let authKey = self.userAgentKeyMaterial.authenticationSecret.base64URLEncodedString()
-        let vapidKey = self.vapidKeyID.description
-        return SubscriberSupabase(endpoint: endpoint, public_key: publicKey, auth_key: authKey, vapid_key: vapidKey, gmail: gmail)
-    }
-}
 
 class NotificationModel {
 
@@ -154,8 +130,10 @@ class NotificationModel {
         return try supaSubscriber.getSubscriber()
     }
 
-    func setSubscriber(email: Gmail, subscriber: Subscriber) async throws {
-        let supaSubscriber = subscriber.getSupabaseSubscriber(gmail: email)
+    // subscriber data is the jsonData you recieve from the body of the request to subscribe
+    func setSubscriber(email: Gmail, subscriberData: Data) async throws {
+        let subscriberText = subscriberData.base64URLEncodedString()
+        let supaSubscriber = SubscriberSupabase(gmail: email, data: subscriberText)
         try await supabase
                 .from("subscriber")
                 .insert(supaSubscriber)

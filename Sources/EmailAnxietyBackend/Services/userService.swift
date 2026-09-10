@@ -100,8 +100,8 @@ final class UserService: Sendable {
         return user
     }
 
-    func uploadSubscription(subscription: Subscriber, gmail: String) async throws {
-        try await NotificationModel().setSubscriber(email: gmail, subscriber: subscription)
+    func uploadSubscription(subscriberData: Data, gmail: String) async throws {
+        try await NotificationModel().setSubscriber(email: gmail, subscriberData: subscriberData)
     }
 
     func getSubscription(gmail: String) async throws -> Subscriber {

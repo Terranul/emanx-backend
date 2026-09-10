@@ -88,11 +88,11 @@ struct UserController: RouteCollection {
 
     func subscribe(req: Request) async throws -> Response {
         print("entered")
-        let subscription = try req.content.decode(Subscriber.self)
-        print(subscription.vapidKeyID)
+        let bodyData: [UInt8] = req.body.data!.getBytes(at: 0, length: req.body.data!.readableBytes)!
+        let subscriberData = Data(bodyData)
         print("finished")
         let gmail = try req.parameters.require("email")
-        try await self.userService.uploadSubscription(subscription: subscription, gmail: gmail)
+        try await self.userService.uploadSubscription(subscriberData: subscriberData, gmail: gmail)
         return Response(status: .ok)
     }
 
