@@ -108,6 +108,7 @@ class NotificationModel {
         try await supabase
                 .from("app_user")
                 .update(supaUser)
+                .eq("usercode", value: user.userCode)
                 .execute()   
     }
 
