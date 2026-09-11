@@ -97,6 +97,7 @@ struct UserMessage: Decodable {
                         throw GmailDecodingError.NoData("Body size is 0. Email is malformed")
                     }
                     if let rawString = getRawString(part.body.data!) {
+                        print("inside the raw string")
                         email.body = rawString
                         return email
                     }
