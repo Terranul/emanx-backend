@@ -134,9 +134,12 @@ final class GmailService: Sendable {
         }
         print("made it past finding all id's")
         let result: [UserMessage] = try await getMessages(links: links)
-        return try result.map { userMessage in
+        return try result.compactMap { userMessage in
             print("inside the map")
-            return try userMessage.getEmail()!
+            if let email = try userMessage.getEmail() {
+                return email
+            }
+            return nil
         }
     }
 }
