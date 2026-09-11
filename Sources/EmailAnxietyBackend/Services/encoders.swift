@@ -91,6 +91,7 @@ struct UserMessage: Decodable {
         if let parts {
             for part in parts {
                 if (part.mimeType == "text/plain") {
+                    print("found text/plain")
                     guard part.body.size != 0 else {
                         // text/plain part entries can never have subcontent, so we can assume this message carries no body data
                         throw GmailDecodingError.NoData("Body size is 0. Email is malformed")
@@ -102,12 +103,13 @@ struct UserMessage: Decodable {
                 }
             }
         }
+        print("hit the nil result")
         return nil
     }
 
     private func getRawString(_ value: String) -> String? {
-        if let base44 = Data(base64Encoded: value) {
-            return String(data: base44, encoding: .utf8)
+        if let base64 = Data(base64URLEncoded: value) {
+            return String(data: base64, encoding: .utf8)
         }
         return nil
     }
