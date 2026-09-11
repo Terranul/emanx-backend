@@ -107,7 +107,7 @@ class EmailModel {
 
     func addEmail(email: SupabaseEmail) async throws {
         try await supabase
-                    .from("EMAIL")
+                    .from("email")
                     .insert(email)
                     .execute()
     }
