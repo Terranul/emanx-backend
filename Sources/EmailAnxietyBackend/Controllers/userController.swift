@@ -48,6 +48,7 @@ struct UserController: RouteCollection {
         let upload: UserController.RegisterUpload = try req.content.decode(RegisterUpload.self)
         let gmailService = GmailService(accessCode: upload.authToken)
         try await gmailService.registerUser()
+        try await gmailService.initializeHistory()
         let userService = UserService()
         let code = UUID().uuidString
         let gmail = try req.parameters.require("email")
@@ -72,7 +73,7 @@ struct UserController: RouteCollection {
         print("passed get user")
         let gmailService = GmailService(accessCode: user.token)
         print("passed gmail service")
-        let newEmails = try await gmailService.getHistoryEmails(historyId: history.historyId)
+        let newEmails = try await gmailService.getHistoryEmails(upTo: history.historyId, gmail: history.emailAddress)
         print("passed get history emails")
         let emailResponses = try await self.userService.addEmails(emails: newEmails, userCode: user.userCode)
         print("passed add email")

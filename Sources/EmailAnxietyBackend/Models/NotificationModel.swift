@@ -70,6 +70,11 @@ struct SubscriberSupabase: Codable {
     }
 }
 
+struct EmailHistory: Codable {
+    let gmail: String
+    let historyid: Int
+}
+
 
 class NotificationModel {
 
@@ -139,5 +144,32 @@ class NotificationModel {
                 .from("subscriber")
                 .insert(supaSubscriber)
                 .execute()
+    }
+
+    func getHistoryId(gmail: Gmail) async throws -> Int {
+        let emailHistory: EmailHistory = try await supabase
+                                                        .from("email_history")
+                                                        .select()
+                                                        .eq("gmail", value: gmail)
+                                                        .single()
+                                                        .execute()
+                                                        .value
+        return emailHistory.historyid
+    }
+
+    func setHistoryId(gmail: Gmail, historyId: Int) async throws {
+        let emailHistory = EmailHistory(gmail: gmail, historyid: historyId)
+        try await supabase
+                    .from("email_history")
+                    .insert(emailHistory)
+                    .execute()
+    }
+
+    func updateHistoryId(gmail: Gmail, historyId: Int) async throws {
+        try await supabase
+            .from("email_history")
+            .update(["historyid": historyId])
+            .eq("gmail", value: gmail)
+            .execute()
     }
 }

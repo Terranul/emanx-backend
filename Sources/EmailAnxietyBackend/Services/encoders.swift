@@ -212,4 +212,8 @@ struct Message: Decodable {
     let id: String
 }
 
+struct GmailUser: Decodable {
+    let emailAddress: String
+    let historyId: String
+}
 

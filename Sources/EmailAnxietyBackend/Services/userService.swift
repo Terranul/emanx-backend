@@ -161,7 +161,5 @@ final class UserService: Sendable {
             return result
         }
     }
-
-    
 }
 

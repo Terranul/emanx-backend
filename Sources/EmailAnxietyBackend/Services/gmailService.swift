@@ -115,6 +115,12 @@ final class GmailService: Sendable {
         print("result:" + String(data: data, encoding: .utf8)!)
     }
 
+    // gets new emails that arrived between the last history id in the db and the one supplied here
+    func getHistoryEmails(upTo historyId: Int, gmail: Gmail) async throws -> [Email] {
+        let oldHistoryId = try await self.manageHistoryId(gmail: gmail, historyId: historyId)
+        return try await self.getHistoryEmails(historyId: oldHistoryId)
+    }
+
     func getHistoryEmails(historyId: Int) async throws -> [Email] {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=\(historyId)")
         request.httpMethod = "GET"
@@ -141,5 +147,22 @@ final class GmailService: Sendable {
             }
             return nil
         }
+    }
+
+    // retreives the previous history id stored in the db
+    // updates the db with the new history id supplied
+    func manageHistoryId(gmail: Gmail, historyId: Int) async throws -> Int {
+        let oldHistoryId = try await NotificationModel().getHistoryId(gmail: gmail)
+        try await NotificationModel().updateHistoryId(gmail: gmail, historyId: historyId)
+        return oldHistoryId
+    }
+
+    // creates the initial history entry **Must be done right when you create the user**
+    func initializeHistory() async throws {
+        var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/profile")
+        request.httpMethod = "GET"
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let gmailUser = try JSONDecoder().decode(GmailUser.self, from: data)
+        try await NotificationModel().setHistoryId(gmail: gmailUser.emailAddress, historyId: Int(gmailUser.historyId)!)
     }
 }
