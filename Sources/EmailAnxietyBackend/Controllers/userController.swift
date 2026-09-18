@@ -10,14 +10,14 @@ struct UserController: RouteCollection {
         let refreshToken: String
     }
 
-    struct PubSubResponse: Decodable {
+    struct PubSubResponse: Content {
         let message: DataResponse
-        struct DataResponse: Decodable {
+        struct DataResponse: Content {
             let data: String
         }
     }
 
-    struct HistoryResponse: Decodable {
+    struct HistoryResponse: Content {
         let emailAddress: String
         let historyId: Int
     }

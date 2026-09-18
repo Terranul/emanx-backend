@@ -167,6 +167,7 @@ class NotificationModel {
     }
 
     func updateHistoryId(gmail: Gmail, historyId: Int) async throws {
+        print("updating historId to: " + String(historyId))
         try await supabase
             .from("email_history")
             .update(["historyid": historyId])

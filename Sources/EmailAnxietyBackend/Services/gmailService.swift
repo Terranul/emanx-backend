@@ -40,7 +40,7 @@ final class GmailService: Sendable {
         var request = try self.getURLRequest(path: "https://gmail.googleapis.com/gmail/v1/users/me/messages/\(code)?format=full")
         request.httpMethod = "GET"
         let (data, _) = try await URLSession.shared.data(for: request)
-        print(String(data: data, encoding: .utf8)!)
+        //print(String(data: data, encoding: .utf8)!)
         let message = try JSONDecoder().decode(UserMessageResponse.self, from: data)
         return message.payload
     }
@@ -126,7 +126,7 @@ final class GmailService: Sendable {
         request.httpMethod = "GET"
         let (data, _) = try await URLSession.shared.data(for: request)
         print("pre decoding")
-        print(String(data: data, encoding: .utf8)!)
+        //print(String(data: data, encoding: .utf8)!)
         let history = try JSONDecoder().decode(HistoryResponse.self, from: data)
         print("post decoding")
         let messagesAddedHistory = history.history.first { cur in
