@@ -19,7 +19,7 @@ struct GeminiTests {
     func testNotify() async throws {
         try await withApp(configure: configure) { app in
             try await app.testing().test(.POST, "v1/users", beforeRequest: { req in
-                let pubSubResponse = try mockPubSubRequest(historyId: 691656) // update this 
+                let pubSubResponse = try mockPubSubRequest(historyId: 701512) // update this  701264
                 try req.content.encode(pubSubResponse)
             },
             afterResponse: { res async in
