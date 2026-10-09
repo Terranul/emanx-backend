@@ -100,6 +100,18 @@ class NotificationModel {
         return supaUser.getUser()
     }
 
+    func getExpiringWatchUsers() async throws -> [User] {
+        let supaUsers: [UserSupabase] = try await supabase
+                                                    .from("app_user")
+                                                    .select()
+                                                    .lt("watch_expiration", value: getNextDate())
+                                                    .execute()
+                                                    .value
+        return supaUsers.map() { cur in
+            return cur.getUser()
+        }   
+    }
+
     func setTokenExpiration(userCode: UserCode, to date: Date) async throws {
         try await supabase
                     .from("app_user")

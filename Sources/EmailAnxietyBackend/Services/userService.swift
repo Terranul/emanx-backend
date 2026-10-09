@@ -152,7 +152,7 @@ final class UserService: Sendable {
                 body.addTask {
                     let emailId = try await self.addEmail(email: email, userCode: userCode)
                     return EmailResponse.SenderEmail(emailId: emailId, body: email)
-                }
+                } 
             }
             var result: [EmailResponse.SenderEmail] = []
             while !body.isEmpty {
